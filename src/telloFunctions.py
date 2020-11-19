@@ -1,8 +1,7 @@
 from djitellopy import Tello
-import cv2 as cv
+from cv2 import cv2
 
-
-def telloInit():
+def initializeTello():
 
     drone = Tello()
     drone.connect()
@@ -12,8 +11,17 @@ def telloInit():
     drone.yaw_velocity = 0
     drone.speed = 0
 
-    print(drone.get_battery)
+    print(drone.get_battery())
     drone.streamoff()
     drone.streamon()
 
-    return drone 
+    return drone
+
+
+def telloGetFrame(drone, frameWidth=360, frameHeight=240):
+
+    telloFrame = drone.get_frame_read()
+    telloFrame = telloFrame.frame
+    img = cv2.resize(telloFrame,(frameWidth,frameHeight))
+    
+    return img
