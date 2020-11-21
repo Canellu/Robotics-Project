@@ -19,7 +19,7 @@ class FrontEnd(object):
             - L: Land
             - Arrow keys: Forward, backward, left and right.
             - A and D: Counter clockwise and clockwise rotations (yaw)
-            - W and S: Up and down. ANTON"EOK"P
+            - W and S: Up and down. 
     """
 
     def __init__(self):
