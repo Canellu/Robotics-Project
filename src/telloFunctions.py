@@ -2,6 +2,13 @@ from djitellopy import Tello
 from cv2 import cv2
 import numpy as np
 
+
+def rescale_frame(frame, percent=75):
+    width = int(frame.shape[1] * percent/ 100)
+    height = int(frame.shape[0] * percent/ 100)
+    dim = (width, height)
+    return cv2.resize(frame, dim, interpolation =cv2.INTER_AREA)
+
 def initializeTello():
 
     drone = Tello()
@@ -15,6 +22,7 @@ def initializeTello():
     print(drone.get_battery())
     drone.streamoff()
     drone.streamon()
+    print("initialize done")
 
     return drone
 
@@ -58,23 +66,50 @@ def findFace(img):
     else:
         return img,[[0,0],0]
 
-def trackFace(drone, info, w, pid, pError):
+def trackFace(drone, info, w, h, pidYaw, pidX, pidZ, pError):
+
+    error = [0,0,0] # yaw, height, distance
+    speed = [0,0,0]
+    percentArea = 1/25
+
+    area = w * h * percentArea
 
     # PID
-    error = (info[0][0] - w//2)//w * 120
-    speed = pid[0]*error + pid[1]*(error-pError)
-    speed = int(np.clip(speed,-100, 100))
-    print(speed)
+    error[0] = (info[0][0] - w//2) #//w * 120
+    error[1] = (info[0][1] - h//2)
+    error[2] = (info[1] - area)/25
+
+    speed[0] = pidYaw[0]*error[0] + pidYaw[1]*(error[0]-pError[0])
+    speed[0] = int(np.clip(speed[0],-100, 100))
+
+    speed[1] = (pidZ[0]*error[1] + pidZ[1]*(error[1]-pError[1]))*(-1)
+    speed[1] = int(np.clip(speed[1],-100, 100))
+
+    speed[2] = (pidX[0]*error[2] + pidX[1]*(error[2]-pError[2]))*(-1)
+    speed[2] = int(np.clip(speed[2],-100, 100))
+
+    # print(f"error: {error[0]}\t speed: {speed[0]}") # yaw
+    # print(f"error: {error[1]}\t speed: {speed[1]}") # height
+    print(f"error: {error[2]}\t speed: {speed[2]}") # distance
 
     if info[0][0] != 0:
-        drone.yaw_velocity = speed
+        drone.yaw_velocity = speed[0]
+    else:
+        drone.left_right_velocity = 0
+        drone.yaw_velocity = 0
+        error[0] = 0
+
+    if info[0][1] != 0:
+        drone.up_down_velocity = speed[1]
+    else:
+        drone.up_down_velocity = 0
+        error[1] = 0
+
+    if info[1] != 0:
+        drone.for_back_velocity = speed[2]
     else:
         drone.for_back_velocity = 0
-        drone.left_right_velocity = 0
-        drone.up_down_velocity = 0
-        drone.yaw_velocity = 0
-        drone.speed = 0
-        error = 0
+        error[2] = 0
 
     if drone.send_rc_control:
         drone.send_rc_control(drone.left_right_velocity,
