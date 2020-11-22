@@ -33,3 +33,10 @@ def findFace(img):
 
     for(x,y,w,h) in faces:
         cv2.rectangle(img,(x,y),(x+w,y+h),(0,0,255),2)
+
+
+def drawOSD(img, drone):
+
+    print(img.shape())
+    # dataToDisplay = []
+    # drone.
