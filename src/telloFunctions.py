@@ -37,6 +37,9 @@ def findFace(img):
 
 def drawOSD(img, drone):
 
-    print(img.shape())
-    # dataToDisplay = []
-    # drone.
+
+    # shape = (height, width, channels)
+    print(img.shape) 
+    dataToDisplay = []
+    stateDict = drone.get_current_state()
+    print(stateDict)
