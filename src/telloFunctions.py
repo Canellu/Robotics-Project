@@ -61,7 +61,7 @@ def findFace(img):
 def trackFace(drone, info, w, pid, pError):
 
     # PID
-    error = (info[0][0] - w//2)
+    error = (info[0][0] - w//2)//w * 120
     speed = pid[0]*error + pid[1]*(error-pError)
     speed = int(np.clip(speed,-100, 100))
     print(speed)
@@ -83,3 +83,9 @@ def trackFace(drone, info, w, pid, pError):
                               drone.yaw_velocity)
 
     return error
+
+def drawOSD(img, drone):
+
+    print(img.shape)
+    # dataToDisplay = []
+    # drone.
