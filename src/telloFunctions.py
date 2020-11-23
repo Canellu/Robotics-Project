@@ -13,19 +13,26 @@ def rescale_frame(frame, percent=75):
 def initializeTello():
 
     drone = Tello()
-    drone.connect()
-    drone.for_back_velocity = 0
-    drone.left_right_velocity = 0
-    drone.up_down_velocity = 0
-    drone.yaw_velocity = 0
-    drone.speed = 0
+    connection = drone.connect()
 
-    print(drone.get_battery())
-    drone.streamoff()
-    drone.streamon()
-    print("initialize done")
+    if connection:
+        drone.for_back_velocity = 0
+        drone.left_right_velocity = 0
+        drone.up_down_velocity = 0
+        drone.yaw_velocity = 0
+        drone.speed = 0
 
-    return drone
+        
+        drone.streamoff()
+        drone.streamon()
+        print(f"BATTERY: {drone.get_battery()}")
+        print("---- Connecting to drone Succeeded ----\n")
+        
+    else:
+        print("\n---- Connecting to drone Failed ----\n")
+
+    return connection, drone
+    
 
 
 def telloGetFrame(drone, frameWidth=360, frameHeight=240):
@@ -69,6 +76,62 @@ def findFace(img):
         return img,[[0,0],0]
 
 
+
+
+def findFaceYolo(outputs, img, classNames):
+
+
+    # Neural Network Params
+    confThreshold = 0.9 # Lower value, more boxes (but worse confidence per box)
+    nmsThreshold = 0.3 # Lower value, less overlaps
+
+    hT, wT, _ = img.shape
+    bbox = [] 
+    classIndices = []
+    confs = []
+    cupArea = []
+
+    for output in outputs: # Go through each output layer (3 layers)
+        for det in output: # Go through each detection in layers (rows per layer: 300 first layer, 1200 second layer, 4800 third layer)
+            scores = det[5:] # List of confidence scores/probability for each class
+            classIndex = np.argmax(scores) # Returns index of highest score
+            confidence = scores[classIndex] # Get the highest score.
+            if confidence > confThreshold:
+                w, h = int(det[2]*wT) , int(det[3]*hT)
+                x, y = int((det[0]*wT) - w/2), int((det[1]*hT) - h/2)
+                bbox.append([x,y,w,h])
+                classIndices.append(classIndex)
+                confs.append(float(confidence))
+
+
+    # Returns indices of boxes to keep when multiple box on same object. Finds box with highest probability, suppress rest.
+    indices = cv2.dnn.NMSBoxes(bbox, confs, confThreshold, nmsThreshold)
+    
+    for i in indices:
+        i = i[0] # Flatten indices, comes as a value in list. [val] --> val
+        box = bbox[i] # Get a box
+        x, y, w, h = box[0], box[1], box[2], box[3] # Extract x, y, width, height
+        area = w * h
+        
+        if(classNames[classIndices[i]] == 'cup'):
+            cv2.rectangle(img, (x,y), (x+w,y+h), (255,0,255), 2) # Draw bounding box
+            cv2.putText(img, f'{classNames[classIndices[i]].upper()} {int(confs[i]*100)}%', 
+                                (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,0,255), 2) #Write class name and % on bounding box
+            cupArea.append(area)
+            
+        
+    if len(cupArea) != 0:
+
+        # finding closest face (biggest area)
+        i = cupArea.index(max(cupArea))
+        cx = bbox[i][0] + bbox[i][2]/2
+        cy = bbox[i][1] + bbox[i][3]/2
+        return img, ([[cx,cy], cupArea[i]])
+       
+    else:
+        return img, ([[0,0],0])
+
+
 def trackFace(drone, info, w, h, pidYaw, pidZ, pidX, pError):
 
     error = [0,0,0] # yaw, height, distance
@@ -93,7 +156,7 @@ def trackFace(drone, info, w, h, pidYaw, pidZ, pidX, pError):
 
     # print(f"error: {error[0]}\t speed: {speed[0]}") # yaw
     # print(f"error: {error[1]}\t speed: {speed[1]}") # height
-    #print(f"error: {error[2]}\t speed: {speed[2]}") # distance
+    # print(f"error: {error[2]}\t speed: {speed[2]}") # distance
 
     if info[0][0] != 0:
         drone.yaw_velocity = speed[0]
@@ -123,29 +186,44 @@ def trackFace(drone, info, w, h, pidYaw, pidZ, pidX, pError):
     return error
 
 
-def drawOSD(frame):
-
-    cv2.putText(frame, "OSD HERE!", (0,30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+def drawOSD(drone, frame, frameWidth, frameHeight):
+   
+    # Data retrieved from drone
+    data = [0] * 10
+    data[0] = str(drone.send_command_with_return('speed?')) # Speed in cm/s 1-100
+    data[1] = str(drone.send_command_with_return('battery?')) # Battery in percentage 0 -100
+    # data[2] = str(drone.send_command_with_return('time?')) # Time since motor on seconds
+    # data[3] = str(drone.send_command_with_return('height?')) # Height in cm 0 - 3000
+    # data[4] = str(drone.send_command_with_return('temp?')) # Temperature in celcius 0 - 90
+    # data[5] = str(drone.send_command_with_return('attitude?')) # Inertial measurement unit (IMU) pitch roll yaw
+    # data[6] = str(drone.send_command_with_return('baro?')) # Absolute height in meters
+    # data[7] = str(drone.send_command_with_return('acceleration?')) # Angular acceleration (0.001g) x y z
+    # data[8] = str(drone.send_command_with_return('tof?')) # Distance from time of flight (TOF) in cm  30 - 1000
+    # data[9] = str(drone.send_command_with_return('wifi?')) # Wi-Fi signal to noise ratio (SNR) dB? Higher better?
     
-    dataToDisplay = [0] * 7
+    
+    cv2.putText(frame, (data[0]) + (data[1]), (0,30), cv2.FONT_HERSHEY_SIMPLEX, 0.25, (255, 255, 255))
+    # cv2.putText(frame, (data[2]) + (data[3]), (0,40), cv2.FONT_HERSHEY_SIMPLEX, 0.25, (255, 255, 255))
+    # cv2.putText(frame, (data[4]) + (data[5]), (0,50), cv2.FONT_HERSHEY_SIMPLEX, 0.25, (255, 255, 255))
+    # cv2.putText(frame, (data[6]) + (data[7]), (0,60), cv2.FONT_HERSHEY_SIMPLEX, 0.25, (255, 255, 255))
+    # cv2.putText(frame, (data[8]) + (data[9]), (0,70), cv2.FONT_HERSHEY_SIMPLEX, 0.25, (255, 255, 255))
+    
+    
 
-    # shape = (height, width, channels)
- 
 
 # Call before main-loop to create the slider (starts from 0 to maxVal)
 # @Parameter is the window to place the slider on.
-def distanceSlider(frame):
+def distanceSlider(frame, frameWidth, frameHeight):
+
+    maxVal = 100
+    startVal = 50
 
     def nothing(var):
         pass
+    sliderWindow = cv2.namedWindow(frame)
+    cv2.resizeWindow(sliderWindow, frameWidth, 300)
+    cv2.createTrackbar("Distance", frame, startVal, maxVal, nothing)
     
-    img = cv2.namedWindow(frame)
-    
-    cv2.createTrackbar("Distance", frame, 50, 100, nothing)
-    cv2.setTrackbarPos("Distance", frame, 239)
-    print(cv2.getWindowImageRect(frame)[3])
-    
-
 
 # Call inside loop to read slider
 # @name = name of trackbar
