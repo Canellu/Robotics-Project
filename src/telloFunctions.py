@@ -1,7 +1,7 @@
 from djitellopy import Tello
 import cv2
 import numpy as np
-
+import time
 
 def rescale_frame(frame, percent=75):
     width = int(frame.shape[1] * percent/ 100)
@@ -69,18 +69,24 @@ def findFace(img):
         return img,[[0,0],0]
 
 
-def trackFace(drone, info, w, h, pidYaw, pidZ, pidX, pError):
+def trackFace(drone, info, pInfo, w, h, pidYaw, pidX, pidZ, pError):
 
     error = [0,0,0] # yaw, height, distance
     speed = [0,0,0]
+    x = 0
+
+    # editable variables
     percentArea = 1/25
+    sideDetecThreshold = 2
+
+    # calculations
 
     area = w * h * percentArea
-
-    # PID
     error[0] = (info[0][0] - w//2) #//w * 120
     error[1] = (info[0][1] - h//2)
     error[2] = (info[1] - area)/25
+
+    # PID
 
     speed[0] = pidYaw[0]*error[0] + pidYaw[1]*(error[0]-pError[0])
     speed[0] = int(np.clip(speed[0],-100, 100))
@@ -91,22 +97,53 @@ def trackFace(drone, info, w, h, pidYaw, pidZ, pidX, pError):
     # speed[2] = (pidX[0]*error[2] + pidX[1]*(error[2]-pError[2]))*(-1)
     # speed[2] = int(np.clip(speed[2],-100, 100))
 
+    # checking values
+
     # print(f"error: {error[0]}\t speed: {speed[0]}") # yaw
     # print(f"error: {error[1]}\t speed: {speed[1]}") # height
-    #print(f"error: {error[2]}\t speed: {speed[2]}") # distance
+    # print(f"error: {error[2]}\t speed: {speed[2]}") # distance
+    # print(f"center x: {info[0][0]} center y: {info[0][1]}") # center coordinate
+    # print(f"current info: {info}\t previous info: {pInfo}")
+
 
     if info[0][0] != 0:
         drone.yaw_velocity = speed[0]
     else:
-        drone.left_right_velocity = 0
-        drone.yaw_velocity = 0
-        error[0] = 0
+        # testing if object went out of frame left/right
+        if pInfo[0][0] != 0:
+            if pInfo[0][0] < (w*sideDetecThreshold)//10: #left
+               drone.yaw_velocity = -100
+               x = 0.15
+            #    drone.rotate_counter_clockwise(360)
+               print("chasing left")
+            elif pInfo[0][0] > (w*(10-sideDetecThreshold))//10: #right
+               drone.yaw_velocity = 100
+               x = 0.15
+            #    drone.rotate_clockwise(360)
+               print("chasing right")
+        # if nothing is being tracked
+        else:
+            drone.left_right_velocity = 0
+            drone.yaw_velocity = 0
+            error[0] = 0
 
     if info[0][1] != 0:
         drone.up_down_velocity = speed[1]
     else:
-        drone.up_down_velocity = 0
-        error[1] = 0
+        # testing if object went out of frame up/down
+        if pInfo[0][1] != 0:
+            if pInfo[0][1] < (h*sideDetecThreshold)//10: #up
+               drone.up_down_velocity = 100
+               x = 0.15
+               print("chasing up")
+            elif pInfo[0][1] > (h*(10-sideDetecThreshold))//10: #down
+               drone.up_down_velocity = -100
+               x = 0.15
+               print("chasing down")
+        # if nothing is being tracked
+        else:
+            drone.up_down_velocity = 0
+            error[1] = 0
 
     if info[1] != 0:
         drone.for_back_velocity = speed[2]
@@ -119,9 +156,12 @@ def trackFace(drone, info, w, h, pidYaw, pidZ, pidX, pError):
                               drone.for_back_velocity,
                               drone.up_down_velocity,
                               drone.yaw_velocity)
+    
+    time.sleep(x)
 
-    return error
+    pInfo = info
 
+    return pInfo, error
 
 def drawOSD(frame):
 
