@@ -10,7 +10,6 @@ pidX = [0.5, 0.2, 0]
 pError = [0, 0, 0] # yaw, height, distance
 
 startCounter = 0 # fly = 1, no fly = 0
-quit = 0
 manualControl = True
 
 drone = initializeTello()
@@ -19,7 +18,7 @@ drone = initializeTello()
 if startCounter == 1:
     drone.takeoff()
 
-while quit != 1:
+while True:
     
     # Step 1
     img = telloGetFrame(drone, frameWidth, frameHeight)
@@ -40,7 +39,6 @@ while quit != 1:
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         drone.land()
-        quit = 1
         break
     # elif cv2.waitKey(1) & 0xFF == ord('m'):
     #     manualControl = !manualControl
