@@ -9,9 +9,9 @@ pidZ = [0.7, 0.6, 0]
 pidX = [0.5, 0.2, 0]
 pError = [0, 0, 0] # yaw, height, distance
 
-startCounter = 1 # fly = 1, no fly = 0
+startCounter = 0 # fly = 1, no fly = 0
 quit = 0
-# manualControl = True
+manualControl = True
 
 drone = initializeTello()
 
@@ -46,3 +46,23 @@ while quit != 1:
     #     manualControl = !manualControl
 
 drone.end()
+
+
+
+
+
+# # Uncomment block below to test slider (NOT DONE YET)
+
+# img = cv2.imread("../colorRangeDetector/object.png")
+# distanceSlider("Display") # Creates a slider
+# while True:
+    
+#     distance = readSlider('Distance', 'Display')
+#     cv2.putText(img, str(distance), (0,60), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 0), 2)
+#     drawOSD(img)
+#     cv2.imshow("Display", img)
+    
+#     if cv2.waitKey(1) & 0xFF == ord('q'):
+#         break;
+
+# cv2.destroyAllWindows()

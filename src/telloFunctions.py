@@ -9,6 +9,7 @@ def rescale_frame(frame, percent=75):
     dim = (width, height)
     return cv2.resize(frame, dim, interpolation =cv2.INTER_AREA)
 
+
 def initializeTello():
 
     drone = Tello()
@@ -34,6 +35,7 @@ def telloGetFrame(drone, frameWidth=360, frameHeight=240):
     img = cv2.resize(telloFrame,(frameWidth,frameHeight))
     
     return img
+
 
 def findFace(img):
 
@@ -65,6 +67,7 @@ def findFace(img):
     
     else:
         return img,[[0,0],0]
+
 
 def trackFace(drone, info, w, h, pidYaw, pidZ, pidX, pError):
 
@@ -119,11 +122,34 @@ def trackFace(drone, info, w, h, pidYaw, pidZ, pidX, pError):
 
     return error
 
-def drawOSD(img, drone):
 
+def drawOSD(frame):
+
+    cv2.putText(frame, "OSD HERE!", (0,30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    
+    dataToDisplay = [0] * 7
 
     # shape = (height, width, channels)
-    print(img.shape) 
-    dataToDisplay = []
-    stateDict = drone.get_current_state()
-    print(stateDict)
+ 
+
+# Call before main-loop to create the slider (starts from 0 to maxVal)
+# @Parameter is the window to place the slider on.
+def distanceSlider(frame):
+
+    def nothing(var):
+        pass
+    
+    img = cv2.namedWindow(frame)
+    
+    cv2.createTrackbar("Distance", frame, 50, 100, nothing)
+    cv2.setTrackbarPos("Distance", frame, 239)
+    print(cv2.getWindowImageRect(frame)[3])
+    
+
+
+# Call inside loop to read slider
+# @name = name of trackbar
+# @frame = the window trackbar resides in
+def readSlider(name, frame):
+    return cv2.getTrackbarPos(name, frame)    
+    
