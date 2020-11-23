@@ -66,7 +66,7 @@ def findFace(img):
     else:
         return img,[[0,0],0]
 
-def trackFace(drone, info, w, h, pidYaw, pidZ, pidX, , pError):
+def trackFace(drone, info, w, h, pidYaw, pidZ, pidX, pError):
 
     error = [0,0,0] # yaw, height, distance
     speed = [0,0,0]
