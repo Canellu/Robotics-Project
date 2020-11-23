@@ -8,7 +8,8 @@ pidYaw = [0.5, 0.5, 0]
 pidZ = [0.7, 0.6, 0]
 pidX = [0.5, 0.2, 0]
 pError = [0, 0, 0] # yaw, height, distance
-startCounter = 0 # fly = 1, no fly = 0
+
+startCounter = 1 # fly = 1, no fly = 0
 quit = 0
 # manualControl = True
 

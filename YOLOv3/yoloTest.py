@@ -3,8 +3,8 @@ import numpy as np
 
 
 
-cap = cv2.VideoCapture(0)
-whT = 320
+cap = cv2.VideoCapture(0) # Get Webcam feed
+whT = 320 # A parameter for image to blob conversion
 confThreshold = 0.5 # Lower value, more boxes (but worse confidence per box)
 nmsThreshold = 0.3 # Lower value, less overlaps
 
@@ -28,7 +28,7 @@ net = cv2.dnn.readNetFromDarknet(modelConfig, modelWeights)
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 
-
+# Detect object and draw bounding boxes
 def findObjects(outputs, img):
     hT, wT, _ = img.shape
     bbox = [] 
@@ -73,7 +73,7 @@ while True:
                                       # likely the box contain an object and how accurate the boundary 
                                       # box is, rest is probability per classes) )
     findObjects(outputs,img)
- 
+    img = rescale_frame(img, percent=150)
     cv2.imshow('Image', img)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
