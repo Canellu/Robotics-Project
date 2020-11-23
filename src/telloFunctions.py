@@ -66,7 +66,7 @@ def findFace(img):
     else:
         return img,[[0,0],0]
 
-def trackFace(drone, info, w, h, pidYaw, pidX, pidZ, pError):
+def trackFace(drone, info, w, h, pidYaw, pidZ, pidX, , pError):
 
     error = [0,0,0] # yaw, height, distance
     speed = [0,0,0]
@@ -85,12 +85,12 @@ def trackFace(drone, info, w, h, pidYaw, pidX, pidZ, pError):
     speed[1] = (pidZ[0]*error[1] + pidZ[1]*(error[1]-pError[1]))*(-1)
     speed[1] = int(np.clip(speed[1],-100, 100))
 
-    speed[2] = (pidX[0]*error[2] + pidX[1]*(error[2]-pError[2]))*(-1)
-    speed[2] = int(np.clip(speed[2],-100, 100))
+    # speed[2] = (pidX[0]*error[2] + pidX[1]*(error[2]-pError[2]))*(-1)
+    # speed[2] = int(np.clip(speed[2],-100, 100))
 
     # print(f"error: {error[0]}\t speed: {speed[0]}") # yaw
     # print(f"error: {error[1]}\t speed: {speed[1]}") # height
-    print(f"error: {error[2]}\t speed: {speed[2]}") # distance
+    #print(f"error: {error[2]}\t speed: {speed[2]}") # distance
 
     if info[0][0] != 0:
         drone.yaw_velocity = speed[0]
