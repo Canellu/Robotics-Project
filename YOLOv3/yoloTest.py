@@ -4,8 +4,8 @@ import numpy as np
 
 
 cap = cv2.VideoCapture(0) # Get Webcam feed
-whT = 320 # A parameter for image to blob conversion
-confThreshold = 0.5 # Lower value, more boxes (but worse confidence per box)
+whT = 416 # A parameter for image to blob conversion
+confThreshold = 0.7 # Lower value, more boxes (but worse confidence per box)
 nmsThreshold = 0.3 # Lower value, less overlaps
 
 def rescale_frame(frame, percent=75):
@@ -16,14 +16,14 @@ def rescale_frame(frame, percent=75):
 
 
 # Import class names to list from coco.names
-classesFile = "coco.names"
+classesFile = "anv.names"
 classNames = []
 with open(classesFile, 'rt') as f:
     classNames = f.read().rstrip('\n').split('\n')
 
 # Set up model and network
-modelConfig = "yolov3.cfg"
-modelWeights = "yolov3.weights" 
+modelConfig = "yolov3_anv.cfg"
+modelWeights = "yolov3_anv.weights" 
 net = cv2.dnn.readNetFromDarknet(modelConfig, modelWeights)
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
