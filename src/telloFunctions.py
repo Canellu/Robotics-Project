@@ -121,8 +121,8 @@ def findFaceYolo(outputs, img, classNames):
     if len(returnArea) != 0:
         # finding closest face (biggest area)
         i = returnArea.index(max(returnArea))
-        bbox[i][0] = bbox[i][0] + bb[i][2]
-        bbox[i][1] = bbox[i][1] + bb[i][3]
+        bbox[i][0] = bbox[i][0] + bbox[i][2]
+        bbox[i][1] = bbox[i][1] + bbox[i][3]
 
         return img, (bbox[i])   
     else:
