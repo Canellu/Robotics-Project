@@ -1,3 +1,6 @@
-yolov3-tiny.weights
+yolov3_anv.weights
+yolov3_anv.cfg
 yolov3.weights
-.vscode
+yolov3-tiny.weights
+anv.names
+settings.json
