@@ -1,5 +1,6 @@
 from djitellopy import Tello
 import cv2
+import socket
 import numpy as np
 import time
 
@@ -35,13 +36,12 @@ def initializeTello():
 
 
 
-def telloGetFrame(drone, frameWidth=360, frameHeight=240):
+def telloGetFrame(drone):
 
     telloFrame = drone.get_frame_read()
     telloFrame = telloFrame.frame
-    img = cv2.resize(telloFrame,(frameWidth,frameHeight))
 
-    return img
+    return telloFrame
 
 
 def findFace(img):
@@ -80,8 +80,8 @@ def findFaceYolo(outputs, img, classNames):
 
 
     # Neural Network Params
-    confThreshold = 0.1 # Lower value, more boxes (but worse confidence per box)
-    nmsThreshold = 0.1 # Lower value, less overlaps
+    confThreshold = 0.9 # Lower value, more boxes (but worse confidence per box)
+    nmsThreshold = 0.3 # Lower value, less overlaps
 
     hT, wT, _ = img.shape
     bbox = [] 
@@ -111,10 +111,7 @@ def findFaceYolo(outputs, img, classNames):
         x, y, w, h = box[0], box[1], box[2], box[3] # Extract x, y, width, height
         area = w * h
 
-        if(classNames[classIndices[i]] == 'Human face'):
-            cv2.rectangle(img, (x,y), (x+w,y+h), (255,0,255), 2) # Draw bounding box
-            cv2.putText(img, f'{classNames[classIndices[i]].upper()} {int(confs[i]*100)}%', 
-                                (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,0,255), 2) #Write class name and % on bounding box
+        if(classNames[classIndices[i]] == 'Face'):
             returnArea.append(area)
 
 
@@ -123,6 +120,11 @@ def findFaceYolo(outputs, img, classNames):
         i = returnArea.index(max(returnArea))
         bbox[i][0] = bbox[i][0] + bbox[i][2]
         bbox[i][1] = bbox[i][1] + bbox[i][3]
+
+        cv2.rectangle(img, (x,y), (x+w,y+h), (255,0,255), 2) # Draw bounding box
+        cv2.putText(img, f'{classNames[classIndices[i]].upper()} {int(confs[i]*100)}%',
+                   (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,0,255), 2) #Write class name and % on bounding box
+
 
         return img, (bbox[i])   
     else:
@@ -236,42 +238,71 @@ def trackFace(drone, info, pInfo, w, h, pidYaw, pidX, pidZ, pError):
 
     return pInfo, error
 
-def drawOSD(drone, frame, frameWidth, frameHeight):
+def droneData(droneStates):
 
-    # Data retrieved from drone
-    data = [0] * 10
-    data[0] = str(drone.send_command_with_return('speed?')) # Speed in cm/s 1-100
-    data[1] = str(drone.send_command_with_return('battery?')) # Battery in percentage 0 -100
-    # data[2] = str(drone.send_command_with_return('time?')) # Time since motor on seconds
-    # data[3] = str(drone.send_command_with_return('height?')) # Height in cm 0 - 3000
-    # data[4] = str(drone.send_command_with_return('temp?')) # Temperature in celcius 0 - 90
-    # data[5] = str(drone.send_command_with_return('attitude?')) # Inertial measurement unit (IMU) pitch roll yaw
-    # data[6] = str(drone.send_command_with_return('baro?')) # Absolute height in meters
-    # data[7] = str(drone.send_command_with_return('acceleration?')) # Angular acceleration (0.001g) x y z
-    # data[8] = str(drone.send_command_with_return('tof?')) # Distance from time of flight (TOF) in cm  30 - 1000
-    # data[9] = str(drone.send_command_with_return('wifi?')) # Wi-Fi signal to noise ratio (SNR) dB? Higher better?
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind(('', 8890))
+    count = 0
+    while True:
+        try:
+            data, server = sock.recvfrom(1518)
+            if count == 100:
+                droneStates.pop(0)
+            droneStates.append(data.decode(encoding="utf-8"))
+        except Exception as err:
+            print(err)
+            sock.close
+            break
+        
+def drawOSD(droneStates, frame):
+    # pitch:0;roll:0;yaw:0;vgx:0;vgy:0;vgz:0;templ:82;temph:85;tof:48;h:0;bat:20;baro:163.98;time:0;agx:6.00;agy:-12.00;agz:-1003.00;  
     
+    states = droneStates[len(droneStates)-1].split(";")
+    pitch = states[0][5:]
+    roll = states[1][4:]
+    yaw = states[2][3:]
+    vgx = states[3][3:]
+    vgy = states[4][3:]
+    vgz = states[5][3:]
+    templ = states[6][5:]
+    temph = states[7][5:]
+    tof = states[8][3:]
+    h = states[9][1:]
+    bat = states[10][3:]
+    baro = states[11][4:]
+    time = states[12][4:]
+    agx = states[13][3:]
+    agy = states[14][3:]
+    agz = states[15][3:]
+
+
+    windowWidth = frame.shape[1]
+    windowHeight = frame.shape[0]
+    posy = 0
+    cv2.putText(frame, f"States: {len(states)}", (150, 20), cv2.FONT_HERSHEY_PLAIN, 1, (255,255,255))
+    for i in range(len(states)-1):
+        posy += 30
+        cv2.rectangle(frame, (0, windowHeight-10), (windowWidth, windowHeight), (0, 255, 0), -1)
+        cv2.putText(frame, states[i], (0,posy), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255))
+        cv2.putText(frame, states[i], (50,posy), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255))
+
+
     
-    cv2.putText(frame, (data[0]) + (data[1]), (0,30), cv2.FONT_HERSHEY_SIMPLEX, 0.25, (255, 255, 255))
-    # cv2.putText(frame, (data[2]) + (data[3]), (0,40), cv2.FONT_HERSHEY_SIMPLEX, 0.25, (255, 255, 255))
-    # cv2.putText(frame, (data[4]) + (data[5]), (0,50), cv2.FONT_HERSHEY_SIMPLEX, 0.25, (255, 255, 255))
-    # cv2.putText(frame, (data[6]) + (data[7]), (0,60), cv2.FONT_HERSHEY_SIMPLEX, 0.25, (255, 255, 255))
-    # cv2.putText(frame, (data[8]) + (data[9]), (0,70), cv2.FONT_HERSHEY_SIMPLEX, 0.25, (255, 255, 255))
     
     
 
 
 # Call before main-loop to create the slider (starts from 0 to maxVal)
 # @Parameter is the window to place the slider on.
-def distanceSlider(frame, frameWidth, frameHeight):
+def distanceSlider(frame):
 
     maxVal = 100
     startVal = 50
 
     def nothing(var):
         pass
+    
     sliderWindow = cv2.namedWindow(frame)
-    cv2.resizeWindow(sliderWindow, frameWidth, 300)
     cv2.createTrackbar("Distance", frame, startVal, maxVal, nothing)
     
 
