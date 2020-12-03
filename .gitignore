@@ -12,3 +12,6 @@ obj-anton.names
 obj.names
 yolov3-custom.cfg
 yolov3-custom_last.weights
+yolov3_anv.cfg
+yolov3_anv.weights
+anv.names
