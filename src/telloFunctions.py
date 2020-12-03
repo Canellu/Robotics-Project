@@ -134,7 +134,6 @@ def trackFace(drone, info, pInfo, w, h, pidYaw, pidX, pidZ, pError):
 
     error = [0,0,0] # yaw, height, distance (pixels)
     speed = [0,0,0] # yaw, height, distance (cm/s)
-    wait = 0 # s
 
     # current info
     cx = info[0]
@@ -150,28 +149,33 @@ def trackFace(drone, info, pInfo, w, h, pidYaw, pidX, pidZ, pError):
 
     # editable variables
     percentArea = 1/25
-    edgeDetecion = False
-    sideDetecThreshold = 2
 
 
     # calculations
-
     area = w * h * percentArea
     error[0] = (cx - w//2) #//w * 120
     error[1] = (cy - h//2)
     error[2] = ((bw * bh) - area)/25
 
     # PID
-
+    # rotation - Yaw
     speed[0] = pidYaw[0]*error[0] + pidYaw[1]*(error[0]-pError[0])
     speed[0] = int(np.clip(speed[0],-100, 100))
-
+    
+    # Z - up/down
     speed[1] = (pidZ[0]*error[1] + pidZ[1]*(error[1]-pError[1]))*(-1)
     speed[1] = int(np.clip(speed[1],-100, 100))
-
+    
+    # X - forward/back
     # speed[2] = (pidX[0]*error[2] + pidX[1]*(error[2]-pError[2]))*(-1)
     # speed[2] = int(np.clip(speed[2],-100, 100))
 
+    # Y - left/right
+    # speed[2] = (pidX[0]*error[2] + pidX[1]*(error[2]-pError[2]))*(-1)
+    # speed[2] = int(np.clip(speed[2],-100, 100))
+
+    
+    
     # checking values
 
     # print(f"error: {error[0]}\t speed: {speed[0]}") # yaw
@@ -180,60 +184,37 @@ def trackFace(drone, info, pInfo, w, h, pidYaw, pidX, pidZ, pError):
     # print(f"center x: {cx} center y: {cy}") # center coordinate
     # print(f"current info: {info}\t previous info: {pInfo}")
 
-
+    # Rotation
     if cx != 0:
         drone.yaw_velocity = speed[0]
     else:
-        # testing if object went out of frame left/right
-        if pcx != 0 and edgeDetecion == True:
-            if pcx < (w*sideDetecThreshold)//10: #left
-               drone.yaw_velocity = -100
-               wait = 0.15
-            #    drone.rotate_counter_clockwise(360)
-               print("chasing left")
-            elif pcx > (w*(10-sideDetecThreshold))//10: #right
-               drone.yaw_velocity = 100
-               wait = 0.15
-            #    drone.rotate_clockwise(360)
-               print("chasing right")
-        # if nothing is being tracked
-        else:
-            drone.left_right_velocity = 0
-            drone.yaw_velocity = 0
-            error[0] = 0
+        drone.yaw_velocity = 0
+        error[0] = 0
 
+    # Up - down
     if cy != 0:
         drone.up_down_velocity = speed[1]
     else:
-        # testing if object went out of frame up/down
-        if pcy != 0 and edgeDetecion == True:
-            if pcy < (h*sideDetecThreshold)//10: #up
-               drone.up_down_velocity = 100
-               wait = 0.15
-               print("chasing up")
-            elif pcy > (h*(10-sideDetecThreshold))//10: #down
-               drone.up_down_velocity = -100
-               wait = 0.15
-               print("chasing down")
-        # if nothing is being tracked
-        else:
-            drone.up_down_velocity = 0
-            error[1] = 0
+        drone.up_down_velocity = 0
+        error[1] = 0
 
+    # Forward - Back
     if (bw * bh) != 0:
         drone.for_back_velocity = speed[2]
     else:
         drone.for_back_velocity = 0
         error[2] = 0
 
+
+    # Update movement
     if drone.send_rc_control:
         drone.send_rc_control(drone.left_right_velocity,
                               drone.for_back_velocity,
                               drone.up_down_velocity,
                               drone.yaw_velocity)
 
-    time.sleep(wait)
 
+    
     pInfo = info
 
     return pInfo, error
@@ -301,7 +282,7 @@ def distanceSlider(frame):
 
     def nothing(var):
         pass
-    
+
     sliderWindow = cv2.namedWindow(frame)
     cv2.createTrackbar("Distance", frame, startVal, maxVal, nothing)
     
