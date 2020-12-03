@@ -81,7 +81,6 @@ def findFace(img):
 
 def findFaceYolo(outputs, img, classNames):
 
-
     # Neural Network Params
     confThreshold = 0.9 # Lower value, more boxes (but worse confidence per box)
     nmsThreshold = 0.3 # Lower value, less overlaps
@@ -121,15 +120,15 @@ def findFaceYolo(outputs, img, classNames):
     if len(returnArea) != 0:
         # finding closest face (biggest area)
         i = returnArea.index(max(returnArea))
-        bbox[i][0] = bbox[i][0] + bbox[i][2]
-        bbox[i][1] = bbox[i][1] + bbox[i][3]
+        bbox[i][0] = bbox[i][0] + bbox[i][2]//2
+        bbox[i][1] = bbox[i][1] + bbox[i][3]//2
 
         cv2.rectangle(img, (x,y), (x+w,y+h), (255,0,255), 2) # Draw bounding box
         cv2.putText(img, f'{classNames[classIndices[i]].upper()} {int(confs[i]*100)}%',
                    (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,0,255), 2) #Write class name and % on bounding box
 
 
-        return img, (bbox[i])   
+        return img, (bbox[i])
     else:
         return img, ([0,0,0,0])
 
@@ -256,9 +255,9 @@ def droneData(droneStates):
             print(err)
             sock.close
             break
-        
+
 def drawOSD(droneStates, frame):
-    # pitch:0;roll:0;yaw:0;vgx:0;vgy:0;vgz:0;templ:82;temph:85;tof:48;h:0;bat:20;baro:163.98;time:0;agx:6.00;agy:-12.00;agz:-1003.00;  
+    # pitch:0;roll:0;yaw:0;vgx:0;vgy:0;vgz:0;templ:82;temph:85;tof:48;h:0;bat:20;baro:163.98;time:0;agx:6.00;agy:-12.00;agz:-1003.00;
     
     states = droneStates[len(droneStates)-1].split(";")
     pitch = states[0][5:]
@@ -290,11 +289,6 @@ def drawOSD(droneStates, frame):
         cv2.putText(frame, states[i], (50,posy), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255))
 
 
-    
-    
-    
-
-
 # Call before main-loop to create the slider (starts from 0 to maxVal)
 # @Parameter is the window to place the slider on.
 def distanceSlider(frame):
@@ -316,27 +310,56 @@ def readSlider(name, frame):
     return cv2.getTrackbarPos(name, frame)    
 
 
+def plot(frameWidth, frameHeight, fig, ax, info, loop, plotInfo):
 
-def plot(x,y,t):
+    # defining axes
+    x_axis = np.linspace(0, frameWidth, num=5)
+    y_axis = np.linspace(frameHeight, 0, num=5)
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    fig.show()
+    # limiting to 100 points in array
+    if len(plotInfo[2]) == 100:
+        plotInfo[0].pop(0)
+        plotInfo[1].pop(0)
+        plotInfo[2].pop(0)
 
-    t = 0
+    # appending new values
+    if info[0] == 0:
+        plotInfo[0].append(frameWidth//2)
+    else:
+        plotInfo[0].append(info[0])
+    
+    if info[1] == 0:
+        plotInfo[1].append(frameHeight//2)
+    else:
+        plotInfo[1].append(info[1])
 
-    ax.plot(x, t, color='b')
+    plotInfo[2].append(loop)
+  
+    # Plotting
 
-    ani = FuncAnimation(plt.gcf, animate, )
+    # x-axis vs loop iteration
+    ax[0].cla()
+    ax[0].plot(plotInfo[0], plotInfo[2], color='b')
+    
+    ax[0].set_xticks(x_axis)
+    ax[0].set_ylim(bottom=max(0, loop-100), top=loop+100)
 
-    # x, y = [], []
+    # y-axis vs loop iteration
+    ax[1].cla()
+    ax[1].plot(plotInfo[2], plotInfo[1], color='b')
+    ax[1].invert_yaxis()
+    
+    ax[1].set_xlim(left=max(0, loop-100), right=loop+100)
+    ax[1].set_yticks(y_axis)
+    
+    fig.canvas.draw()
 
-    #     x.append(i)
-    #     y.append(inputVar)
+    # Return updated x,y,t array
+    return plotInfo
 
-    #     ax.plot(x, y, color = 'b')
-    #     fig.canvas.draw()
-    #     ax.set_xlim(left=max(0, i-50), right=i+50)
+def kalmanVideo():
 
-    #     time.sleep(0.1)
-    #     i += 1
+    varMatrix = np.array([[0,1],[1,0]]) # Variance-covariance matrix
+
+    varMeasured
+    varProcess

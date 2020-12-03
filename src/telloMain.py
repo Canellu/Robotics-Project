@@ -4,13 +4,23 @@ import cv2
 import threading
 import numpy as np
 
+# VARIABLES # ----------------------------------------
 
 droneStates = []
 
+# Control Panel Parameters
+startFlight = True # Controls takeoff at start. True to takeoff.
+manualControl = False # Press 'm' during flight to turn manual to true.
+safeQuit = False # Do not change value.
 
+# Plotting variables, declarations
+plotInfo = [[],[],[]] # Do not change value
+loop = 0 # Do not change value
+plotUpdate = 1
+
+# YOLO 
 whT = 320 # A parameter for image to blob conversion
 
-# Import class names to list from coco.names
 classesFile = "../YOLOv3/coco.names"
 classNames = []
 with open(classesFile, 'rt') as f:
@@ -23,9 +33,6 @@ net = cv2.dnn.readNetFromDarknet(modelConfig, modelWeights)
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 
-# automatic scaling
-# frameWidth = 1.5 * frameHeight
-
 # PID data
 pidYaw = [0.5, 0.5, 0]
 pidZ = [0.7, 0.6, 0]
@@ -34,10 +41,7 @@ pInfo = [0, 0, 0, 0] # x, y, width, height
 pError = [0, 0, 0] # yaw, height, distance
 
 
-# Control Panel Parameters
-startFlight = False # Controls takeoff at start. True to takeoff.
-manualControl = False # Press 'm' during flight to turn manual to true.
-safeQuit = False # Do not change value.
+# PROGRAM # ----------------------------------------
 
 # Get drone object
 connection, drone = initializeTello()
@@ -55,13 +59,9 @@ if connection:
 # Display info
 distanceSlider("Display") # Creates a slider
 
-x_added = []
-t_added = []
-t = 0
-fig = plt.figure()
-ax = fig.add_subplot(111)
-fig.show()
 
+fig, ax = plt.subplots(2)
+fig.show()
 
 distanceSlider("Display") # Creates a slider
 
@@ -82,24 +82,20 @@ while connection:
     frameWidth, frameHeight = img.shape[1], img.shape[0]
 
     # Step 2 
-    # img, info = findFace(img)
-    img, info = findFaceYolo(outputs, img, classNames)
+    img, info = findFace(img)
+    # img, info = findFaceYolo(outputs, img, classNames)
 
   
     # Step 3 Control drone movement to track object
     pInfo, pError = trackFace(drone, info, pInfo, frameWidth, frameHeight, pidYaw, pidX, pidZ, pError)
 
-    if t%10 == 0:
-        x_added.append(info[0])
-        t_added.append(t)
-        print(x_added)
-        # ax.plot(info[0], t_added, color='b')
-        ax.plot(x_added, t_added, color='b')
-        fig.canvas.draw()
-        ax.set_xlim(left=max(0, t-100), right=t+100)
-        ax.set_ylim(bottom=0, top=360)
-    
-    t += 1
+    # Plotting center point data
+    if loop%plotUpdate == 0:
+        plotInfo = plot(frameWidth, frameHeight, fig, ax, info, loop, plotInfo)
+
+    # Update number of loops that the program has done
+    loop += 1
+
 
     # # Draw OSD and Slider
     # distance = readSlider('Distance', 'Display') # Read value from slider
@@ -111,6 +107,7 @@ while connection:
     cv2.imshow('Display', img)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
+        plt.close('all')
         drone.land()
         drone.end()
         safeQuit = True
@@ -123,9 +120,5 @@ if not safeQuit:
     drone.end() # If program ended without 'q'
 
 cv2.destroyAllWindows()
-
-
-
-
 
 
