@@ -46,17 +46,17 @@ def CheckWhichKeyIsPressed():
 
 
 # YOLO STUFF
-whT = 320 # A parameter for image to blob conversion
+whT = 416 # A parameter for image to blob conversion
 
 # Import class names to list from coco.names
-classesFile = "../YOLOv3/anv.names"
+classesFile = "../YOLOv3/face.names"
 classNames = []
 with open(classesFile, 'rt') as f:
     classNames = f.read().rstrip('\n').split('\n')
 
 # Set up model and network
-modelConfig = "../YOLOv3/yolov3_anv.cfg"
-modelWeights = "../YOLOv3/yolov3_anv.weights" 
+modelConfig = "../YOLOv3/face.cfg"
+modelWeights = "../YOLOv3/face.weights" 
 net = cv2.dnn.readNetFromDarknet(modelConfig, modelWeights)
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
@@ -99,8 +99,6 @@ while connection:
                                         # (rows , columns) = (boxnumber , ( 0-4 = cx,cy,w,h, score of how 
                                         # likely the box contain an object and how accurate the boundary 
                                         # box is, rest is probability per classes) )
-
-        
 
         # Tracking methods: HAAR, YOLO, 
         # img, info = findFace(img) # HAAR
@@ -151,8 +149,10 @@ while connection:
             trackOn = True
 
     # Change track mode
-    if keyPressed == 'p':
-        mode = not mode
+    if keyPressed == '1':
+        mode = True
+    if keyPressed == '2':
+        mode = False
 
 
 
