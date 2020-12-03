@@ -2,6 +2,9 @@ from djitellopy import Tello
 import cv2
 import numpy as np
 import time
+import psutil
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 def rescale_frame(frame, percent=75):
     width = int(frame.shape[1] * percent/ 100)
@@ -280,4 +283,29 @@ def distanceSlider(frame, frameWidth, frameHeight):
 # @frame = the window trackbar resides in
 def readSlider(name, frame):
     return cv2.getTrackbarPos(name, frame)    
-    
+
+
+
+def plot(x,y,t):
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    fig.show()
+
+    t = 0
+
+    ax.plot(x, t, color='b')
+
+    ani = FuncAnimation(plt.gcf, animate, )
+
+    # x, y = [], []
+
+    #     x.append(i)
+    #     y.append(inputVar)
+
+    #     ax.plot(x, y, color = 'b')
+    #     fig.canvas.draw()
+    #     ax.set_xlim(left=max(0, i-50), right=i+50)
+
+    #     time.sleep(0.1)
+    #     i += 1

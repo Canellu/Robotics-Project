@@ -6,14 +6,14 @@ import numpy as np
 whT = 192 # A parameter for image to blob conversion
 
 # Import class names to list from coco.names
-classesFile = "../YOLOv3/obj.names"
+classesFile = "../YOLOv3/coco.names"
 classNames = []
 with open(classesFile, 'rt') as f:
     classNames = f.read().rstrip('\n').split('\n')
 
 # Set up model and network
-modelConfig = "../YOLOv3/yolov3_custom.cfg"
-modelWeights = "../YOLOv3/yolov3_custom.weights" 
+modelConfig = "../YOLOv3/yolov3-tiny.cfg"
+modelWeights = "../YOLOv3/yolov3-tiny.weights" 
 net = cv2.dnn.readNetFromDarknet(modelConfig, modelWeights)
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
@@ -47,6 +47,14 @@ if startFlight:
 # Display info
 distanceSlider("Display", frameWidth, frameHeight) # Creates a slider
 
+x_added = []
+t_added = []
+t = 0
+fig = plt.figure()
+ax = fig.add_subplot(111)
+fig.show()
+
+
 
 while connection:
     
@@ -69,7 +77,17 @@ while connection:
     # Step 3 Control drone movement to track object
     pInfo, pError = trackFace(drone, info, pInfo, frameWidth, frameHeight, pidYaw, pidX, pidZ, pError)
 
+    if t%10 == 0:
+        x_added.append(info[0])
+        t_added.append(t)
+        print(x_added)
+        # ax.plot(info[0], t_added, color='b')
+        ax.plot(x_added, t_added, color='b')
+        fig.canvas.draw()
+        ax.set_xlim(left=max(0, t-100), right=t+100)
+        ax.set_ylim(bottom=0, top=360)
     
+    t += 1
 
     # # Draw OSD and Slider
     # distance = readSlider('Distance', 'Display') # Read value from slider
