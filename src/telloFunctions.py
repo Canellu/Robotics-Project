@@ -115,7 +115,7 @@ def findFaceYolo(outputs, img, classNames):
         area = w * h
 
         
-        if(classNames[classIndices[i]] == 'Face'):
+        if(classNames[classIndices[i]] == 'person'):
             returnIndices.append(i)
 
 
@@ -344,7 +344,16 @@ def distanceSlider(frame):
         pass
     sliderWindow = cv2.namedWindow(frame)
     cv2.createTrackbar("Distance", frame, startVal, maxVal, nothing)
-    
+
+def qSlider(frame):
+    maxVal = 200
+    startVal = 100
+
+    def nothing(var):
+        pass
+    sliderWindow = cv2.namedWindow(frame)
+    cv2.createTrackbar("Q Value", frame, startVal, maxVal, nothing)
+
 
 # Call inside loop to read slider
 # @name = name of trackbar
@@ -353,28 +362,38 @@ def readSlider(name, frame):
     return cv2.getTrackbarPos(name, frame)    
 
 
-def plot(frameWidth, frameHeight, fig, ax, info, loop, plotInfo):
+def plot(frameWidth, frameHeight, fig, ax, info, xT, loop, plotInfo, plotKalman):
+
+    #plotInfo[0] = x
+    #plotInfo[1] = y
+    #plotInfo[2] = loop
 
     # defining axes
     x_axis = np.linspace(0, frameWidth, num=5)
     y_axis = np.linspace(frameHeight, 0, num=5)
 
     # limiting to 100 points in array
-    if len(plotInfo[2]) == 100:
+    if len(plotInfo[2]) > 100:
         plotInfo[0].pop(0)
         plotInfo[1].pop(0)
         plotInfo[2].pop(0)
+        plotKalman[0].pop(0)
+        plotKalman[1].pop(0)
 
     # appending new values
-    if info[0] == 0:
+    if info[0] == 0: # x
         plotInfo[0].append(frameWidth//2)
+        plotKalman[0].append(frameWidth//2)
     else:
         plotInfo[0].append(info[0])
+        plotKalman[0].append(xT[0])
     
-    if info[1] == 0:
+    if info[1] == 0: # y
         plotInfo[1].append(frameHeight//2)
+        plotKalman[1].append(frameHeight//2)
     else:
         plotInfo[1].append(info[1])
+        plotKalman[1].append(xT[1])
 
     plotInfo[2].append(loop)
   
@@ -382,14 +401,16 @@ def plot(frameWidth, frameHeight, fig, ax, info, loop, plotInfo):
 
     # x-axis vs loop iteration
     ax[0].cla()
-    ax[0].plot(plotInfo[0], plotInfo[2], color='b')
+    ax[0].plot(plotInfo[0], plotInfo[2], color='r')
+    ax[0].plot(plotKalman[0], plotInfo[2], color='b')
     
     ax[0].set_xticks(x_axis)
     ax[0].set_ylim(bottom=max(0, loop-100), top=loop+100)
 
     # y-axis vs loop iteration
     ax[1].cla()
-    ax[1].plot(plotInfo[2], plotInfo[1], color='b')
+    ax[1].plot(plotInfo[2], plotInfo[1], color='r')
+    ax[1].plot(plotInfo[2], plotKalman[1], color='b')
     ax[1].invert_yaxis()
     
     ax[1].set_xlim(left=max(0, loop-100), right=loop+100)
@@ -398,11 +419,29 @@ def plot(frameWidth, frameHeight, fig, ax, info, loop, plotInfo):
     fig.canvas.draw()
 
     # Return updated x,y,t array
-    return plotInfo
+    return plotInfo, plotKalman
 
-def kalmanVideo():
+def kalmanVideo(info, xTOld, pTOld, Q, R):
 
-    varMatrix = np.array([[0,1],[1,0]]) # Variance-covariance matrix
+    # reminders
+    # t: transpose
 
-    varMeasured
-    varProcess
+    # state matrix measurements
+    xM = np.array([info[0], info[1]]) # x measured
+
+    # Transform matrices: A,B,C,I = I2
+    # A = np.eye(2)
+    # C = np.eye(2)
+    I = np.eye(2)
+
+    # Predict cycle
+    xT = xTOld                          # xT = A*xT-1; predicted state estimate
+    pT = pTOld + Q                      # pT = A*pT-1*At + Q; predicted state variance
+
+    # Update cycle
+    K = pT.dot(np.linalg.inv(pT + R))   # K = pT*Ct / (C*pT*Ct + R); kalman gain
+    xTNew = xT + K.dot(xM - xT)         # xT = xT + K*(xM - C*xT); new estimate
+    pTNew = (I - K).dot(pT)             # pT = (I - K * C) * pT; new variance
+    print(f'Measured: {xM[0]} \tPrediction: {xTNew[0]}')
+
+    return xTNew, pTNew

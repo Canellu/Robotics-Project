@@ -6,3 +6,7 @@ anv.names
 settings.json
 yolov3-tiny.weights
 yolov3.weight
+obj.names
+yolov3_custom.cfg
+yolov3_custom.weights
+__pycache__

@@ -16,10 +16,20 @@ flight = False # True = takeoff, false = land
 mode = True  # True = Rotation, False = Translation
 safeQuit = False # Do not change value. Safety measures.
 
-# Plotting variables, declarations
+
+# Kalman variables, declarations
+Q = np.array([[1, 0],[0, 1]]) # Process noise
+R = np.array([[10, 0],[0, 10]]) # Measurement noise
+xT = np.array([480,360])
+pT = np.array([[1, 0],[0, 1]])
+
+
+# Plotting variables, parameters
+countArray = []
 plotInfo = [[],[],[]] # Do not change value
-loop = 0 # Do not change value
-plotUpdate = 1
+plotKalman = [[],[]] # Do not change value
+loopCount = 0
+updateCycle = 1
 
 
 # Drone data
@@ -31,6 +41,7 @@ pidY = [0.4, 0.6, 0] # Left right
 pidX = [0.6, 0.75, 0] # Forward back
 pidZ = [0.9, 1.2, 0] # Up down
 pidYaw = [0.7, 0.9, 0] # Rotate
+info = [0,0,0,0] # x, y, width, height
 pInfo = [0, 0, 0, 0] # x, y, width, height
 pError = [0, 0, 0] # yaw, height, distance
 
@@ -55,7 +66,7 @@ def CheckWhichKeyIsPressed():
 whT = 320 # A parameter for image to blob conversion
 
 # Import class names to list from coco.names
-classesFile = "../YOLOv3/anv.names"
+classesFile = "../YOLOv3/coco.names"
 classNames = []
 with open(classesFile, 'rt') as f:
     classNames = f.read().rstrip('\n').split('\n')
@@ -68,27 +79,24 @@ net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 
 
-
-
 ## MAIN PROGRAM STARTS HERE ##
 
 # Get drone object
 connection, drone = initializeTello()
 
-
-# Start data recieve thread   
+# Start data recieve thread
 if connection:
+    # OSD
     dataThread = threading.Thread(target=droneData, args=(droneStates,))
     dataThread.start()
-    
-     
-# Distance slider
-distanceSlider("Display") # Creates a slider
 
-fig, ax = plt.subplots(2)
-fig.show()
+    # Create plot
+    fig, ax = plt.subplots(2)
+    fig.show()
 
-distanceSlider("Display") # Creates a slider
+    # Distance slider
+    distanceSlider("Display") # Creates a slider
+    qSlider("Display")
 
 # Loop
 while connection:
@@ -112,11 +120,21 @@ while connection:
 
         
 
-        # Tracking methods: HAAR, YOLO, 
-        # img, info = findFace(img) # HAAR
-        img, info = findFaceYolo(outputs, img, classNames) # YOLO
+        # Tracking methods: HAAR, YOLO
+        img, info = findFace(img) # HAAR
+        # img, info = findFaceYolo(outputs, img, classNames) # YOLO
 
-        
+        # Kalman
+        qVal = readSlider('Q Value', 'Display')
+        Q = np.array([[qVal/100,0],[0,qVal/100]])
+        xT, pT = kalmanVideo(info, xT, pT, Q, R)
+
+        # Plotting center coordinates
+        if (loopCount % updateCycle) == 0:
+            plotInfo, plotKalman = plot(frameWidth, frameHeight, fig, ax, info, xT, loopCount, plotInfo, plotKalman)
+        loopCount += 1
+
+
         # Read slider data
         distance = readSlider('Distance', 'Display')
         
@@ -124,7 +142,7 @@ while connection:
         # Control drone movement to track object
         pInfo, pError = trackFace(drone, info, pInfo, frameWidth, frameHeight, pidY, pidX, pidZ, pidYaw, pError, distance, img, mode)
 
-    
+
     # drawOSD(droneStates, img)
 
     
