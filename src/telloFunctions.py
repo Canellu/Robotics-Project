@@ -212,7 +212,6 @@ def trackFace(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slider
             drone.yaw_velocity = 0
             error[0] = 0
     else:
-        print("CALCULATING TRANSLATION \n\n\n\n\n")
         # Translation
         if cx != 0:
             drone.left_right_velocity = speed[0]
