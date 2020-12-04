@@ -162,7 +162,7 @@ def trackFace(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slider
     pbh = pInfo[2]
 
     # editable variables
-    percentH = 180 # 1/6 * h + (sliderVal-50)*4 + h/10; exact value, 180 is an estimate for easier computation
+    percentH = 180 - (sliderVal-50)*4 # 1/6 * h + (sliderVal-50)*4 + h/10; exact value, 180 is an estimate for easier computation
                    # estimated head size = 25 cm, desired bounding box height = 1/6 frame height
                    # 720/6 = 120, 25 cm corresponds to 120 px, therefore: 1 cm = 4.8 px
 
@@ -221,7 +221,7 @@ def trackFace(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slider
             drone.left_right_velocity = 0
             error[0] = 0
 
-    # # Up - down
+    #  Up - down
     if cy != 0:
         drone.up_down_velocity = speed[2]
     else:
@@ -229,11 +229,11 @@ def trackFace(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slider
         error[2] = 0
 
     # Forward - Back
-    # if bh != 0:
-    #     drone.for_back_velocity = speed[1]
-    # else:
-    #     drone.for_back_velocity = 0
-    #     error[2] = 0
+    if bh != 0:
+        drone.for_back_velocity = speed[1]
+    else:
+        drone.for_back_velocity = 0
+        error[2] = 0
 
 
     # Update movement
@@ -257,7 +257,7 @@ def droneData(droneStates):
     while True:
         try:
             data, server = sock.recvfrom(1518)
-            if count == 100:
+            if count >= 100:
                 droneStates.pop(0)
             droneStates.append(data.decode(encoding="utf-8"))
         except Exception as err:
@@ -378,31 +378,27 @@ def plot(frameWidth, frameHeight, fig, ax, info, X, loop, plotInfo, plotKalman):
   
     # Plotting
 
-    # x-axis vs loop iteration
-    ax[0].cla()
-    ax[0].plot(plotInfo[0], plotInfo[3], color='r')
-    ax[0].plot(plotKalman[0], plotInfo[3], color='b')
-    
-    ax[0].set_xticks(x_axis)
-    ax[0].set_ylim(bottom=max(0, loop-100), top=loop+100)
+    # # x-axis vs loop iteration
+    # ax[0].cla()
+    # ax[0].plot(plotInfo[0], plotInfo[3], color='r')
+    # ax[0].plot(plotKalman[0], plotInfo[3], color='b')
+    # ax[0].set_xticks(x_axis)
+    # ax[0].set_ylim(bottom=max(0, loop-100), top=loop+100)
 
     # y-axis vs loop iteration
-    ax[1].cla()
-    ax[1].plot(plotInfo[3], plotInfo[1], color='r')
-    ax[1].plot(plotInfo[3], plotKalman[1], color='b')
-    ax[1].invert_yaxis()
-    
-    ax[1].set_xlim(left=max(0, loop-100), right=loop+100)
-    ax[1].set_yticks(y_axis)
+    ax.cla()
+    ax.plot(plotInfo[3], plotInfo[1], color='r')
+    ax.plot(plotInfo[3], plotKalman[1], color='b')
+    ax.invert_yaxis()
+    ax.set_xlim(left=max(0, loop-100), right=loop+100)
+    ax.set_yticks(y_axis)
 
-    # forwardback vs loop iteration
-    
-    ax[2].cla()
-    ax[2].plot(plotInfo[3], plotInfo[2], color='r')
-    ax[2].plot(plotInfo[3], plotKalman[2], color='b')
-    
-    ax[2].set_xlim(left=max(0, loop-100), right=loop+100)
-    ax[2].set_yticks(y_axis)
+    # # forwardback vs loop iteration   
+    # ax[2].cla()
+    # ax[2].plot(plotInfo[3], plotInfo[2], color='r')
+    # ax[2].plot(plotInfo[3], plotKalman[2], color='b')
+    # ax[2].set_xlim(left=max(0, loop-100), right=loop+100)
+    # ax[2].set_yticks(y_axis)
     
     fig.canvas.draw()
 

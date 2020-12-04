@@ -12,14 +12,13 @@ import numpy as np
 listener = None # To check wether listener thread is created
 keyPressed = None # Value of pressed keys
 trackOn = False # True to track object, false otherwise
-flight = False # True = takeoff, false = land
 mode = True  # True = Rotation, False = Translation
 safeQuit = False # Do not change value. Safety measures.
 plotOn = False # True to draw plots of X Y H.
 
 
 # Kalman variables, declarations
-Q = np.array([[1.5, 0, 0], [0, 2, 0], [0, 0, 1.4]]) # Process noise
+Q = np.array([[1.5, 0, 0], [0, 5, 0], [0, 0, 1.4]]) # Process noise
 R = np.array([[80, 0, 0], [0, 200, 0],[0, 0, 90]]) # Measurement noise
 X = np.array([480, 360, 180])
 P = np.array([[1, 0, 0],[0, 1, 0], [0, 0, 1]])
@@ -41,7 +40,7 @@ droneStates = []
 pidY = [0.4, 0.6, 0] # Left right
 pidX = [0.6, 0.75, 0] # Forward back
 pidZ = [0.9, 1.2, 0] # Up down
-pidYaw = [0.7, 0.9, 0] # Rotate
+pidYaw = [0.7, 0.2, 0] # Rotate
 info = [0,0,0,0] # x, y, width, height
 pInfo = [0, 0, 0] # x, y, height
 pError = [0, 0, 0] # yaw, height, distance
@@ -73,8 +72,8 @@ with open(classesFile, 'rt') as f:
     classNames = f.read().rstrip('\n').split('\n')
 
 # Set up model and network
-modelConfig = "../YOLOv3/yolov3_only_anton-tiny.cfg"
-modelWeights = "../YOLOv3/yolov3_only_anton-tiny.weights" 
+modelConfig = "../YOLOv3/yolov3_only_anton.cfg"
+modelWeights = "../YOLOv3/yolov3_only_anton.weights" 
 net = cv2.dnn.readNetFromDarknet(modelConfig, modelWeights)
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
@@ -88,12 +87,12 @@ connection, drone = initializeTello()
 # Start data recieve thread
 if connection:
     # OSD
-    dataThread = threading.Thread(target=droneData, args=(droneStates,))
+    dataThread = threading.Thread(target=droneData, args=(droneStates,), daemon=True)
     dataThread.start()
 
     # Create plot
     if plotOn:
-        fig, ax = plt.subplots(3)
+        fig, ax = plt.subplots(1)
         fig.show()
 
     # Distance slider
@@ -183,15 +182,13 @@ while connection:
         safeQuit = True
         break
     
-    # To take off or land
+    # To take off
     if keyPressed == 'f':
-        keyPressed = None
-        if flight == False:
-            flight = True
-            drone.takeoff()
-        else:
-            flight = False
-            drone.land()
+        drone.takeoff()
+   
+    # To land drone
+    if keyPressed == 'l':
+        drone.land()
 
     # Enable/Disable tracking
     if keyPressed == 't':
@@ -202,12 +199,13 @@ while connection:
             trackOn = True
 
     # Change track mode
-    if keyPressed == '1': # Rotation
+    if keyPressed == '1': # Rotation     
         mode = True
     if keyPressed == '2': # Translation
         mode = False
 
-
+    
+    keyPressed = None
 
 
 
