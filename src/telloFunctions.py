@@ -162,13 +162,15 @@ def trackFace(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slider
     pbh = pInfo[2]
 
     # editable variables
-    percentH = 1/6 * h + (sliderVal-50)*4 + h/10
-
+    percentH = 180 # 1/6 * h + (sliderVal-50)*4 + h/10; exact value, 180 is an estimate for easier computation
+                   # estimated head size = 25 cm, desired bounding box height = 1/6 frame height
+                   # 720/6 = 120, 25 cm corresponds to 120 px, therefore: 1 cm = 4.8 px
 
     # calculations
     error[0] = (cx - w//2) / (w/2) * 100
     error[1] = (cy - h//2) / (h/2) * 100
     error[2] = (bh - percentH)/percentH * 100
+
     # PID
     if mode:
         # rotation - Yaw
@@ -227,11 +229,11 @@ def trackFace(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slider
         error[2] = 0
 
     # Forward - Back
-    if bh != 0:
-        drone.for_back_velocity = speed[1]
-    else:
-        drone.for_back_velocity = 0
-        error[2] = 0
+    # if bh != 0:
+    #     drone.for_back_velocity = speed[1]
+    # else:
+    #     drone.for_back_velocity = 0
+    #     error[2] = 0
 
 
     # Update movement
@@ -412,23 +414,29 @@ def kalman(info, XOld, POld, Q, R):
     # reminders
     # t: transpose
 
-    # state matrix measurements
-    XM = np.array([info[0], info[1], info[3]]) # X measured
+    if info[3] == 0: # Testing if object is within view
+        XNew = [480, 360, 180]
+        PNew = POld
 
-    # Transform matrices: A,B,C,I = I3
-    # A = np.eye(3)
-    # C = np.eye(3)
-    I = np.eye(3)
+    else:
+        # state matrix measurements
+        XM = np.array([info[0], info[1], info[3]]) # X measured
 
-    # Predict cycle
-    X = XOld                          # X = A*X-1; predicted state estimate
-    P = POld + Q                      # P = A*P-1*At + Q; predicted state variance
+        # Transform matrices: A,B,C,I = I3
+        # A = np.eye(3)
+        # C = np.eye(3)
+        I = np.eye(3)
 
-    # Update cycle
-    K = P.dot(np.linalg.inv(P + R))   # K = P*Ct / (C*P*Ct + R); kalman gain
-    XNew = X + K.dot(XM - X)         # X = X + K*(XM - C*X); new estimate
-    PNew = (I - K).dot(P)             # P = (I - K * C) * P; new variance
-    # print(f'Measured: {XM}\nPrediction: {XNew}')
+        # Predict cycle
+        X = XOld                          # X = A*X-1; predicted state estimate
+        P = POld + Q                      # P = A*P-1*At + Q; predicted state variance
 
-    XNew = XNew.astype(int)
+        # Update cycle
+        K = P.dot(np.linalg.inv(P + R))   # K = P*Ct / (C*P*Ct + R); kalman gain
+        XNew = X + K.dot(XM - X)         # X = X + K*(XM - C*X); new estimate
+        PNew = (I - K).dot(P)             # P = (I - K * C) * P; new variance
+        # print(f'Measured: {XM}\nPrediction: {XNew}')
+
+        XNew = XNew.astype(int)
+
     return XNew, PNew

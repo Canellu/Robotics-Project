@@ -73,8 +73,8 @@ with open(classesFile, 'rt') as f:
     classNames = f.read().rstrip('\n').split('\n')
 
 # Set up model and network
-modelConfig = "../YOLOv3/yolov3_only_anton.cfg"
-modelWeights = "../YOLOv3/yolov3_only_anton.weights" 
+modelConfig = "../YOLOv3/yolov3_only_anton-tiny.cfg"
+modelWeights = "../YOLOv3/yolov3_only_anton-tiny.weights" 
 net = cv2.dnn.readNetFromDarknet(modelConfig, modelWeights)
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
@@ -148,6 +148,8 @@ while connection:
         
         
         # Control drone movement to track object
+        
+
         pInfo, pError = trackFace(drone, X, pInfo, frameWidth, frameHeight, pidY, pidX, pidZ, pidYaw, pError, distance, img, mode)
 
 
