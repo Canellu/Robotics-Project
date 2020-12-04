@@ -15,21 +15,22 @@ trackOn = False # True to track object, false otherwise
 flight = False # True = takeoff, false = land
 mode = True  # True = Rotation, False = Translation
 safeQuit = False # Do not change value. Safety measures.
+plotOn = False # True to draw plots of X Y H.
 
 
 # Kalman variables, declarations
-Q = np.array([[1.5, 0, 0], [0, 1.5, 0], [0, 0, 1]]) # Process noise
-R = np.array([[80, 0, 0], [0, 200, 0],[0, 0, 500]]) # Measurement noise
-X = np.array([480, 360, 200])
+Q = np.array([[1.5, 0, 0], [0, 2, 0], [0, 0, 1.4]]) # Process noise
+R = np.array([[80, 0, 0], [0, 200, 0],[0, 0, 90]]) # Measurement noise
+X = np.array([480, 360, 180])
 P = np.array([[1, 0, 0],[0, 1, 0], [0, 0, 1]])
 
 
 # Plotting variables, parameters
 countArray = []
-plotInfo = [[],[],[],[]] # [x,y,loopCount,h] Do not change value
+plotInfo = [[],[],[],[]] # [x,y,h,loopCount] Do not change value
 plotKalman = [[],[],[]] # Do not change value
 loopCount = 0
-updateCycle = 1
+updateCycle = 3
 
 
 # Drone data
@@ -42,7 +43,7 @@ pidX = [0.6, 0.75, 0] # Forward back
 pidZ = [0.9, 1.2, 0] # Up down
 pidYaw = [0.7, 0.9, 0] # Rotate
 info = [0,0,0,0] # x, y, width, height
-pInfo = [0, 0, 0, 0] # x, y, width, height
+pInfo = [0, 0, 0] # x, y, height
 pError = [0, 0, 0] # yaw, height, distance
 
 
@@ -66,14 +67,14 @@ def CheckWhichKeyIsPressed():
 whT = 320 # A parameter for image to blob conversion
 
 # Import class names to list from coco.names
-classesFile = "../YOLOv3/coco.names"
+classesFile = "../YOLOv3/anton.names"
 classNames = []
 with open(classesFile, 'rt') as f:
     classNames = f.read().rstrip('\n').split('\n')
 
 # Set up model and network
-modelConfig = "../YOLOv3/yolov3-tiny.cfg"
-modelWeights = "../YOLOv3/yolov3-tiny.weights" 
+modelConfig = "../YOLOv3/yolov3_only_anton.cfg"
+modelWeights = "../YOLOv3/yolov3_only_anton.weights" 
 net = cv2.dnn.readNetFromDarknet(modelConfig, modelWeights)
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
@@ -91,8 +92,9 @@ if connection:
     dataThread.start()
 
     # Create plot
-    fig, ax = plt.subplots(3)
-    fig.show()
+    if plotOn:
+        fig, ax = plt.subplots(3)
+        fig.show()
 
     # Distance slider
     distanceSlider("Display") # Creates a slider
@@ -102,6 +104,7 @@ if connection:
 start_time = time.time()
 x = 1
 counter = 0
+FPS = 0
 # Loop
 while connection:
     
@@ -125,8 +128,8 @@ while connection:
         
 
         # Tracking methods: HAAR, YOLO
-        img, info = findFace(img) # HAAR
-        #img, info = findFaceYolo(outputs, img, classNames) # YOLO
+        # img, info = findFace(img) # HAAR
+        img, info = findFaceYolo(outputs, img, classNames) # YOLO
 
         # Kalman
         # qVal = readSlider('Q Value', 'Display') # For testing purposes
@@ -134,9 +137,10 @@ while connection:
         X, P = kalman(info, X, P, Q, R)
 
         # Plotting center coordinates
-        if (loopCount % updateCycle) == 0:
-            plotInfo, plotKalman = plot(frameWidth, frameHeight, fig, ax, info, X, loopCount, plotInfo, plotKalman)
-        loopCount += 1
+        if plotOn:
+            if (loopCount % updateCycle) == 0:
+                plotInfo, plotKalman = plot(frameWidth, frameHeight, fig, ax, info, X, loopCount, plotInfo, plotKalman)
+            loopCount += 1
 
 
         # Read slider data
@@ -144,7 +148,7 @@ while connection:
         
         
         # Control drone movement to track object
-        pInfo, pError = trackFace(drone, info, pInfo, frameWidth, frameHeight, pidY, pidX, pidZ, pidYaw, pError, distance, img, mode)
+        pInfo, pError = trackFace(drone, X, pInfo, frameWidth, frameHeight, pidY, pidX, pidZ, pidYaw, pError, distance, img, mode)
 
 
     # drawOSD(droneStates, img)
@@ -153,10 +157,13 @@ while connection:
     # FPS CALCS!
     counter+=1
     if (time.time() - start_time) > x :
+        FPS = int(counter / (time.time() - start_time))
+        if FPS > 30:
+            FPS = 30
         counter = 0
         start_time = time.time()
     
-    cv2.putText(img, (f'FPS: {counter / (time.time() - start_time)}'), (50,300), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2)
+    cv2.putText(img, (f'FPS: {FPS}'), (50,300), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2)
     # Show frames on window for 1ms
     cv2.imshow('Display', img)
     cv2.waitKey(1)
@@ -171,6 +178,7 @@ while connection:
         plt.close('all')
         # print(f"VARIANCE X: {np.var(plotInfo[0])} LEN: {len(plotInfo[0])}") # Measurement variance in X
         # print(f"VARIANCE Y: {np.var(plotInfo[1])} LEN: {len(plotInfo[1])}") # Measurement variance in Y
+        # print(f"VARIANCE FB: {np.var(plotInfo[2])} LEN: {len(plotInfo[2])}") # Measurement variance in Forward-Back
         safeQuit = True
         break
     

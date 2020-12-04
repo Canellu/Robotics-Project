@@ -154,14 +154,12 @@ def trackFace(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slider
     # current info
     cx = info[0]
     cy = info[1]
-    bw = info[2]
-    bh = info[3]
+    bh = info[2]
 
     # previous info
     pcx = pInfo[0]
     pcy = pInfo[1]
-    pbw = pInfo[2]
-    pbh = pInfo[3]
+    pbh = pInfo[2]
 
     # editable variables
     percentH = 1/6 * h + (sliderVal-50)*4 + h/10
@@ -194,12 +192,12 @@ def trackFace(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slider
     # TEST PRINTS ---------------
     cv2.putText(frame, str(mode), (50,200), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2)
     cv2.rectangle(frame, (0, frame.shape[0]-190), (frame.shape[1], frame.shape[0]), (211, 211, 211), -1)
-    # cv2.putText(frame, (f"eRotation       : {error[0]}\t speed: {speed[3]}") , (10, frame.shape[0]-10), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0))
-    # cv2.putText(frame, (f"eLeftRight       : {error[0]}\t speed: {speed[0]}") , (10, frame.shape[0]-40), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0))
-    # cv2.putText(frame, (f"eUpdown         : {error[1]}\t speed: {speed[2]}") , (10, frame.shape[0]-70), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0))
-    cv2.putText(frame, (f"eForwardBackward: {error[2]}\t speed: {speed[1]}") , (10, frame.shape[0]-100), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0))
-    # cv2.putText(frame, (f"center x: {cx} center y: {cy}") , (10, frame.shape[0]-130), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0))
-    # cv2.putText(frame, (f"current info: {info}\n previous info: {pInfo}") , (10, frame.shape[0]-160), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0))
+    cv2.putText(frame, (f"eRotation       : {int(error[0])}\t speed: {speed[3]}") , (10, frame.shape[0]-10), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0))
+    cv2.putText(frame, (f"eLeftRight       : {int(error[0])}\t speed: {speed[0]}") , (10, frame.shape[0]-40), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0))
+    cv2.putText(frame, (f"eUpdown         : {int(error[1])}\t speed: {speed[2]}") , (10, frame.shape[0]-70), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0))
+    cv2.putText(frame, (f"eForwardBackward: {int(error[2])}\t speed: {speed[1]}") , (10, frame.shape[0]-100), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0))
+    cv2.putText(frame, (f"center x: {int(cx)} center y: {int(cy)}") , (10, frame.shape[0]-130), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0))
+    cv2.putText(frame, (f"current info: {info}\n previous info: {pInfo}") , (10, frame.shape[0]-160), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0))
 
 
 
@@ -229,7 +227,7 @@ def trackFace(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slider
         error[2] = 0
 
     # Forward - Back
-    if (bw * bh) != 0:
+    if bh != 0:
         drone.for_back_velocity = speed[1]
     else:
         drone.for_back_velocity = 0
@@ -367,11 +365,11 @@ def plot(frameWidth, frameHeight, fig, ax, info, X, loop, plotInfo, plotKalman):
         plotInfo[1].append(info[1])
         plotKalman[1].append(X[1])
 
-    if info[2] == 0: # y
+    if info[3] == 0: # h
         plotInfo[2].append(200)
         plotKalman[2].append(200)
     else:
-        plotInfo[2].append(info[2])
+        plotInfo[2].append(info[3])
         plotKalman[2].append(X[2])
 
     plotInfo[3].append(loop)
@@ -395,7 +393,8 @@ def plot(frameWidth, frameHeight, fig, ax, info, X, loop, plotInfo, plotKalman):
     ax[1].set_xlim(left=max(0, loop-100), right=loop+100)
     ax[1].set_yticks(y_axis)
 
-    # y-axis vs loop iteration
+    # forwardback vs loop iteration
+    
     ax[2].cla()
     ax[2].plot(plotInfo[3], plotInfo[2], color='r')
     ax[2].plot(plotInfo[3], plotKalman[2], color='b')
@@ -429,6 +428,7 @@ def kalman(info, XOld, POld, Q, R):
     K = P.dot(np.linalg.inv(P + R))   # K = P*Ct / (C*P*Ct + R); kalman gain
     XNew = X + K.dot(XM - X)         # X = X + K*(XM - C*X); new estimate
     PNew = (I - K).dot(P)             # P = (I - K * C) * P; new variance
-    print(f'Measured: {XM[0]} \tPrediction: {XNew[0]}')
+    # print(f'Measured: {XM}\nPrediction: {XNew}')
 
+    XNew = XNew.astype(int)
     return XNew, PNew
