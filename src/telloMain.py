@@ -102,7 +102,6 @@ if connection:
 
 
 start_time = time.time()
-x = 1
 counter = 0
 FPS = 0
 # Loop
@@ -156,7 +155,7 @@ while connection:
 
     # FPS CALCS!
     counter+=1
-    if (time.time() - start_time) > x :
+    if (time.time() - start_time) > 1 :
         FPS = int(counter / (time.time() - start_time))
         if FPS > 30:
             FPS = 30
