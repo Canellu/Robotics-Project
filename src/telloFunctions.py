@@ -298,40 +298,6 @@ def drawOSD(droneStates, frame):
         cv2.putText(frame, states[i], (0,posy), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255))
         cv2.putText(frame, states[i], (50,posy), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255))
 
-
-    
-    
-    
-    states = droneStates[len(droneStates)-1].split(";")
-    pitch = states[0][5:]
-    roll = states[1][4:]
-    yaw = states[2][3:]
-    vgx = states[3][3:]
-    vgy = states[4][3:]
-    vgz = states[5][3:]
-    templ = states[6][5:]
-    temph = states[7][5:]
-    tof = states[8][3:]
-    h = states[9][1:]
-    bat = states[10][3:]
-    baro = states[11][4:]
-    time = states[12][4:]
-    agx = states[13][3:]
-    agy = states[14][3:]
-    agz = states[15][3:]
-
-
-    windowWidth = frame.shape[1]
-    windowHeight = frame.shape[0]
-    posy = 0
-    cv2.putText(frame, f"States: {len(states)}", (150, 20), cv2.FONT_HERSHEY_PLAIN, 1, (255,255,255))
-    for i in range(len(states)-1):
-        posy += 30
-        cv2.rectangle(frame, (0, windowHeight-10), (windowWidth, windowHeight), (0, 255, 0), -1)
-        cv2.putText(frame, states[i], (0,posy), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255))
-        cv2.putText(frame, states[i], (50,posy), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255))
-
-
 # Call before main-loop to create the slider (starts from 0 to maxVal)
 # @Parameter is the window to place the slider on.
 def distanceSlider(frame):
@@ -361,23 +327,30 @@ def readSlider(name, frame):
     return cv2.getTrackbarPos(name, frame)    
 
 
-def plot(frameWidth, frameHeight, fig, ax, info, xT, loop, plotInfo, plotKalman):
+def plot(frameWidth, frameHeight, fig, ax, info, X, loop, plotInfo, plotKalman):
 
     #plotInfo[0] = x
     #plotInfo[1] = y
-    #plotInfo[2] = loop
+    #plotInfo[2] = h
+    #plotInfo[3] = loop
+
+    #plotKalman[0] = x
+    #plotKalman[1] = y
+    #plotKalman[2] = h
 
     # defining axes
     x_axis = np.linspace(0, frameWidth, num=5)
     y_axis = np.linspace(frameHeight, 0, num=5)
 
     # limiting to 100 points in array
-    if len(plotInfo[2]) > 100:
+    if len(plotInfo[3]) > 100:
         plotInfo[0].pop(0)
         plotInfo[1].pop(0)
         plotInfo[2].pop(0)
+        plotInfo[3].pop(0)
         plotKalman[0].pop(0)
         plotKalman[1].pop(0)
+        plotKalman[2].pop(0)
 
     # appending new values
     if info[0] == 0: # x
@@ -385,62 +358,77 @@ def plot(frameWidth, frameHeight, fig, ax, info, xT, loop, plotInfo, plotKalman)
         plotKalman[0].append(frameWidth//2)
     else:
         plotInfo[0].append(info[0])
-        plotKalman[0].append(xT[0])
+        plotKalman[0].append(X[0])
     
     if info[1] == 0: # y
         plotInfo[1].append(frameHeight//2)
         plotKalman[1].append(frameHeight//2)
     else:
         plotInfo[1].append(info[1])
-        plotKalman[1].append(xT[1])
+        plotKalman[1].append(X[1])
 
-    plotInfo[2].append(loop)
+    if info[2] == 0: # y
+        plotInfo[2].append(200)
+        plotKalman[2].append(200)
+    else:
+        plotInfo[2].append(info[2])
+        plotKalman[2].append(X[2])
+
+    plotInfo[3].append(loop)
   
     # Plotting
 
     # x-axis vs loop iteration
     ax[0].cla()
-    ax[0].plot(plotInfo[0], plotInfo[2], color='r')
-    ax[0].plot(plotKalman[0], plotInfo[2], color='b')
+    ax[0].plot(plotInfo[0], plotInfo[3], color='r')
+    ax[0].plot(plotKalman[0], plotInfo[3], color='b')
     
     ax[0].set_xticks(x_axis)
     ax[0].set_ylim(bottom=max(0, loop-100), top=loop+100)
 
     # y-axis vs loop iteration
     ax[1].cla()
-    ax[1].plot(plotInfo[2], plotInfo[1], color='r')
-    ax[1].plot(plotInfo[2], plotKalman[1], color='b')
+    ax[1].plot(plotInfo[3], plotInfo[1], color='r')
+    ax[1].plot(plotInfo[3], plotKalman[1], color='b')
     ax[1].invert_yaxis()
     
     ax[1].set_xlim(left=max(0, loop-100), right=loop+100)
     ax[1].set_yticks(y_axis)
+
+    # y-axis vs loop iteration
+    ax[2].cla()
+    ax[2].plot(plotInfo[3], plotInfo[2], color='r')
+    ax[2].plot(plotInfo[3], plotKalman[2], color='b')
+    
+    ax[2].set_xlim(left=max(0, loop-100), right=loop+100)
+    ax[2].set_yticks(y_axis)
     
     fig.canvas.draw()
 
     # Return updated x,y,t array
     return plotInfo, plotKalman
 
-def kalmanVideo(info, xTOld, pTOld, Q, R):
+def kalman(info, XOld, POld, Q, R):
 
     # reminders
     # t: transpose
 
     # state matrix measurements
-    xM = np.array([info[0], info[1]]) # x measured
+    XM = np.array([info[0], info[1], info[3]]) # X measured
 
-    # Transform matrices: A,B,C,I = I2
-    # A = np.eye(2)
-    # C = np.eye(2)
-    I = np.eye(2)
+    # Transform matrices: A,B,C,I = I3
+    # A = np.eye(3)
+    # C = np.eye(3)
+    I = np.eye(3)
 
     # Predict cycle
-    xT = xTOld                          # xT = A*xT-1; predicted state estimate
-    pT = pTOld + Q                      # pT = A*pT-1*At + Q; predicted state variance
+    X = XOld                          # X = A*X-1; predicted state estimate
+    P = POld + Q                      # P = A*P-1*At + Q; predicted state variance
 
     # Update cycle
-    K = pT.dot(np.linalg.inv(pT + R))   # K = pT*Ct / (C*pT*Ct + R); kalman gain
-    xTNew = xT + K.dot(xM - xT)         # xT = xT + K*(xM - C*xT); new estimate
-    pTNew = (I - K).dot(pT)             # pT = (I - K * C) * pT; new variance
-    print(f'Measured: {xM[0]} \tPrediction: {xTNew[0]}')
+    K = P.dot(np.linalg.inv(P + R))   # K = P*Ct / (C*P*Ct + R); kalman gain
+    XNew = X + K.dot(XM - X)         # X = X + K*(XM - C*X); new estimate
+    PNew = (I - K).dot(P)             # P = (I - K * C) * P; new variance
+    print(f'Measured: {XM[0]} \tPrediction: {XNew[0]}')
 
-    return xTNew, pTNew
+    return XNew, PNew

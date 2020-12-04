@@ -18,16 +18,16 @@ safeQuit = False # Do not change value. Safety measures.
 
 
 # Kalman variables, declarations
-Q = np.array([[1.5, 0],[0, 1.5]]) # Process noise
-R = np.array([[80, 0],[0, 200]]) # Measurement noise
-xT = np.array([480,360])
-pT = np.array([[1, 0],[0, 1]])
+Q = np.array([[1.5, 0, 0], [0, 1.5, 0], [0, 0, 1]]) # Process noise
+R = np.array([[80, 0, 0], [0, 200, 0],[0, 0, 500]]) # Measurement noise
+X = np.array([480, 360, 200])
+P = np.array([[1, 0, 0],[0, 1, 0], [0, 0, 1]])
 
 
 # Plotting variables, parameters
 countArray = []
-plotInfo = [[],[],[]] # Do not change value
-plotKalman = [[],[]] # Do not change value
+plotInfo = [[],[],[],[]] # [x,y,loopCount,h] Do not change value
+plotKalman = [[],[],[]] # Do not change value
 loopCount = 0
 updateCycle = 1
 
@@ -66,14 +66,14 @@ def CheckWhichKeyIsPressed():
 whT = 320 # A parameter for image to blob conversion
 
 # Import class names to list from coco.names
-classesFile = "../YOLOv3/anton.names"
+classesFile = "../YOLOv3/coco.names"
 classNames = []
 with open(classesFile, 'rt') as f:
     classNames = f.read().rstrip('\n').split('\n')
 
 # Set up model and network
-modelConfig = "../YOLOv3/yolov3_only_anton.cfg"
-modelWeights = "../YOLOv3/yolov3_only_anton.weights" 
+modelConfig = "../YOLOv3/yolov3-tiny.cfg"
+modelWeights = "../YOLOv3/yolov3-tiny.weights" 
 net = cv2.dnn.readNetFromDarknet(modelConfig, modelWeights)
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
@@ -91,7 +91,7 @@ if connection:
     dataThread.start()
 
     # Create plot
-    fig, ax = plt.subplots(2)
+    fig, ax = plt.subplots(3)
     fig.show()
 
     # Distance slider
@@ -125,17 +125,17 @@ while connection:
         
 
         # Tracking methods: HAAR, YOLO
-        #img, info = findFace(img) # HAAR
-        img, info = findFaceYolo(outputs, img, classNames) # YOLO
+        img, info = findFace(img) # HAAR
+        #img, info = findFaceYolo(outputs, img, classNames) # YOLO
 
         # Kalman
         # qVal = readSlider('Q Value', 'Display') # For testing purposes
         # Q = np.array([[(qVal/100),0],[0,(qVal/100)]])
-        xT, pT = kalmanVideo(info, xT, pT, Q, R)
+        X, P = kalman(info, X, P, Q, R)
 
         # Plotting center coordinates
         if (loopCount % updateCycle) == 0:
-            plotInfo, plotKalman = plot(frameWidth, frameHeight, fig, ax, info, xT, loopCount, plotInfo, plotKalman)
+            plotInfo, plotKalman = plot(frameWidth, frameHeight, fig, ax, info, X, loopCount, plotInfo, plotKalman)
         loopCount += 1
 
 
