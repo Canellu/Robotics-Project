@@ -10,3 +10,6 @@ obj.names
 yolov3_custom.cfg
 yolov3_custom.weights
 __pycache__
+anton.names
+yolov3_only_anton.cfg
+yolov3_only_anton.weights

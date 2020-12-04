@@ -18,8 +18,8 @@ safeQuit = False # Do not change value. Safety measures.
 
 
 # Kalman variables, declarations
-Q = np.array([[1, 0],[0, 1]]) # Process noise
-R = np.array([[10, 0],[0, 10]]) # Measurement noise
+Q = np.array([[1.5, 0],[0, 1.5]]) # Process noise
+R = np.array([[80, 0],[0, 200]]) # Measurement noise
 xT = np.array([480,360])
 pT = np.array([[1, 0],[0, 1]])
 
@@ -66,14 +66,14 @@ def CheckWhichKeyIsPressed():
 whT = 320 # A parameter for image to blob conversion
 
 # Import class names to list from coco.names
-classesFile = "../YOLOv3/coco.names"
+classesFile = "../YOLOv3/anton.names"
 classNames = []
 with open(classesFile, 'rt') as f:
     classNames = f.read().rstrip('\n').split('\n')
 
 # Set up model and network
-modelConfig = "../YOLOv3/yolov3-tiny.cfg"
-modelWeights = "../YOLOv3/yolov3-tiny.weights" 
+modelConfig = "../YOLOv3/yolov3_only_anton.cfg"
+modelWeights = "../YOLOv3/yolov3_only_anton.weights" 
 net = cv2.dnn.readNetFromDarknet(modelConfig, modelWeights)
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
@@ -96,8 +96,12 @@ if connection:
 
     # Distance slider
     distanceSlider("Display") # Creates a slider
-    qSlider("Display")
+    #qSlider("Display")
 
+
+start_time = time.time()
+x = 1
+counter = 0
 # Loop
 while connection:
     
@@ -121,12 +125,12 @@ while connection:
         
 
         # Tracking methods: HAAR, YOLO
-        img, info = findFace(img) # HAAR
-        # img, info = findFaceYolo(outputs, img, classNames) # YOLO
+        #img, info = findFace(img) # HAAR
+        img, info = findFaceYolo(outputs, img, classNames) # YOLO
 
         # Kalman
-        qVal = readSlider('Q Value', 'Display')
-        Q = np.array([[qVal/100,0],[0,qVal/100]])
+        # qVal = readSlider('Q Value', 'Display') # For testing purposes
+        # Q = np.array([[(qVal/100),0],[0,(qVal/100)]])
         xT, pT = kalmanVideo(info, xT, pT, Q, R)
 
         # Plotting center coordinates
@@ -145,7 +149,14 @@ while connection:
 
     # drawOSD(droneStates, img)
 
+
+    # FPS CALCS!
+    counter+=1
+    if (time.time() - start_time) > x :
+        counter = 0
+        start_time = time.time()
     
+    cv2.putText(img, (f'FPS: {counter / (time.time() - start_time)}'), (50,300), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2)
     # Show frames on window for 1ms
     cv2.imshow('Display', img)
     cv2.waitKey(1)
@@ -157,6 +168,9 @@ while connection:
     if keyPressed == 'q':
         drone.land()
         drone.end()
+        plt.close('all')
+        # print(f"VARIANCE X: {np.var(plotInfo[0])} LEN: {len(plotInfo[0])}") # Measurement variance in X
+        # print(f"VARIANCE Y: {np.var(plotInfo[1])} LEN: {len(plotInfo[1])}") # Measurement variance in Y
         safeQuit = True
         break
     
@@ -179,8 +193,10 @@ while connection:
             trackOn = True
 
     # Change track mode
-    if keyPressed == 'p':
-        mode = not mode
+    if keyPressed == '1': # Rotation
+        mode = True
+    if keyPressed == '2': # Translation
+        mode = False
 
 
 
@@ -188,6 +204,7 @@ while connection:
 
 # Safety measure
 if not safeQuit:
+    plt.close('all')
     drone.end() # If program ended without 'q'
 
 cv2.destroyAllWindows()
