@@ -7,7 +7,7 @@
 # or
 # (python) range-detector --filter HSV --webcam
 
-from cv2 import cv2
+import cv2
 import argparse
 from operator import xor
 

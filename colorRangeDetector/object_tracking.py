@@ -3,7 +3,7 @@ from collections import deque
 from imutils.video import VideoStream
 import numpy as np
 import argparse
-from cv2 import cv2
+import cv2
 import imutils
 import time
 # construct the argument parse and parse the arguments|
@@ -19,8 +19,8 @@ args = vars(ap.parse_args())
 #define the lower and upper boundaries of the "green"
 # ball in the HSV color space, then initialize the
 # list of tracked points
-greenLower = (114, 137, 79)
-greenUpper = (171, 255, 255)
+greenLower = (23, 141, 160)
+greenUpper = (32, 251, 237)
 pts = deque(maxlen=args["buffer"])
 # if a video path was not supplied, grab the reference
 # to the webcam
