@@ -13,3 +13,13 @@ __pycache__
 6c.cfg
 6c.names
 6c.weights
+obj.names
+yolov3_custom.cfg
+yolov3_custom.weights
+__pycache__
+anton.names
+yolov3_only_anton.cfg
+yolov3_only_anton.weights
+6c.cfg
+6c.weights
+6c.names
