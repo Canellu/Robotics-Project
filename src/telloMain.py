@@ -1,5 +1,5 @@
 from telloFunctions import *
-from pynput.keyboard import Key, Listener, Controller
+from pynput.keyboard import Key, Listener
 import time
 import cv2
 import threading
@@ -34,6 +34,8 @@ updateCycle = 3
 
 # Drone data
 droneStates = []
+S = 30
+classNumber = 0
 
 # FPS
 counter = 0
@@ -57,13 +59,74 @@ pError = [0, 0, 0] # yaw, height, distance
 # Keyboard listener
 def on_release(key):
     global keyPressed
-    keyPressed = key.char
-    print(f"KEY PRESSED: {keyPressed}")
+
+    try:
+        if key.char == 'q':
+            keyPressed = key.char
+        elif key.char == 'c':
+            keyPressed = key.char
+        elif key.char == '1':
+            keyPressed = key.char
+        elif key.char == '2':
+            keyPressed = key.char    
+        elif key.char == 'f':
+            keyPressed = key.char
+        elif key.char == 'l':
+            keyPressed = key.char
+        elif key.char == 'm':
+            keyPressed = key.char
+        elif key.char == 't':
+            keyPressed = key.char
+        elif key.char == 'o':
+            keyPressed = key.char
+        elif key.char == 'w' or key.char == 's':
+            drone.up_down_velocity = 0
+        elif key.char == 'a' or key.char == 'd':
+            drone.yaw_velocity = 0
+    except AttributeError:
+        if key == Key.left:
+            drone.left_right_velocity = 0
+        elif key == Key.right:
+            drone.left_right_velocity = 0
+        elif key == Key.up:
+            drone.for_back_velocity = 0
+        elif key == Key.down:
+            drone.for_back_velocity = 0
+
+def on_press(key):
+    global keyPressed
+
+    try:
+        if key.char == 'w':
+            drone.up_down_velocity = drone.speed
+        elif key.char == 's':
+            drone.up_down_velocity = -drone.speed
+        elif key.char == 'a':
+            drone.yaw_velocity = -drone.speed
+        elif key.char == 'd':
+            drone.yaw_velocity = drone.speed
+    except AttributeError:
+        if key == Key.left:
+            drone.left_right_velocity = -drone.speed
+        elif key == Key.right:
+            drone.left_right_velocity = drone.speed
+        elif key == Key.up:
+            drone.for_back_velocity = drone.speed
+        elif key == Key.down:
+            drone.for_back_velocity = -drone.speed
+        
+def updateMovement():
+    # Update movement
+    if drone.send_rc_control:
+        drone.send_rc_control(drone.left_right_velocity,
+                              drone.for_back_velocity,
+                              drone.up_down_velocity,
+                              drone.yaw_velocity)
 
 def CheckWhichKeyIsPressed():  
     global listener 
     if listener == None:  
-        listener = Listener(on_release=on_release,suppress=True)
+        listener = Listener(on_release=on_release, on_press=on_press)
         listener.start()
         print("CREATING LISTENER THREAD\n\n")
 
@@ -94,7 +157,10 @@ if connection:
     
     #qSlider("Display")
 
+    drone.speed = S
 
+    # Function that creates listener on different thread that detects a key press/release
+    CheckWhichKeyIsPressed()
 
 
 # Loop
@@ -103,7 +169,6 @@ while connection:
     # Get frame and size of frame from Tello
     img = telloGetFrame(drone)
     frameWidth, frameHeight = img.shape[1], img.shape[0]
-
 
     #Check wether to track object or not
     if trackOn:
@@ -119,7 +184,7 @@ while connection:
 
         # Tracking methods: HAAR, YOLO
         # img, info = findFace(img) # HAAR
-        img, info = findFaceYolo(outputs, img, classNames) # YOLO
+        img, info = findFaceYolo(outputs, img, classNames, classNumber) # YOLO
 
         # Kalman
         # qVal = readSlider('Q Value', 'Display') # For testing purposes
@@ -140,7 +205,8 @@ while connection:
         # Control drone movement to track object
         pInfo, pError = trackFace(drone, X, pInfo, frameWidth, frameHeight, pidY, pidX, pidZ, pidYaw, pError, distance, img, mode)
 
-
+    else:
+        updateMovement()
     
 
     if OSDon:
@@ -159,14 +225,13 @@ while connection:
         cv2.putText(img, 'FPS:', (166,650), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,255), 1)
         cv2.putText(img, str(FPS), (228,650), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,255), 2)
         
-        drawOSD(droneStates, img, pulse, mode, trackOn)
+        drawOSD(droneStates, img, pulse, mode, trackOn, classNames, classNumber)
 
     # Show frames on window for 1ms
     cv2.imshow('Display', img)
     cv2.waitKey(1)
 
-    # Function that detects a key-release and assign it to keyPressed
-    CheckWhichKeyIsPressed()
+    
 
     # To land and end connection
     if keyPressed == 'q':
@@ -179,33 +244,38 @@ while connection:
         break
     
     # To take off
-    if keyPressed == 'f':
+    elif keyPressed == 'f':
         drone.takeoff()
    
     # To land drone
-    if keyPressed == 'l':
+    elif keyPressed == 'l':
         drone.land()
 
     # Enable/Disable tracking
-    if keyPressed == 't':
-        keyPressed = None
-        if trackOn == True:
-            trackOn = False
-        else:
-            trackOn = True
+    elif keyPressed == 't':
+        trackOn = True
+    elif keyPressed == 'm':
+        trackOn = False
 
     # Change track mode
-    if keyPressed == '1': # Rotation     
+    elif keyPressed == '1': # Rotation     
         mode = True
-    if keyPressed == '2': # Translation
+    elif keyPressed == '2': # Translation
         mode = False
     
     # Enable/Disable OSD
-    if keyPressed == 'o':
+    elif keyPressed == 'o':
         OSDon = not OSDon
 
-    
+    elif keyPressed == 'c':
+        if classNumber == len(classNames)-1:
+            classNumber = 0
+        else:
+            classNumber += 1
+
     keyPressed = None
+
+
 
 
 

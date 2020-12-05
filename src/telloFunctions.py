@@ -88,14 +88,14 @@ def initYOLO():
     whT = 320 # A parameter for image to blob conversion
 
     # Import class names to list from coco.names
-    classesFile = "../YOLOv3/anton.names"
+    classesFile = "../YOLOv3/6c.names"
     classNames = []
     with open(classesFile, 'rt') as f:
         classNames = f.read().rstrip('\n').split('\n')
 
     # Set up model and network
-    modelConfig = "../YOLOv3/yolov3_only_anton.cfg"
-    modelWeights = "../YOLOv3/yolov3_only_anton.weights" 
+    modelConfig = "../YOLOv3/6c.cfg"
+    modelWeights = "../YOLOv3/6c.weights" 
     net = cv2.dnn.readNetFromDarknet(modelConfig, modelWeights)
     net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
     net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
@@ -103,10 +103,12 @@ def initYOLO():
     return classNames, net, whT
 
 
-def findFaceYolo(outputs, img, classNames):
+def findFaceYolo(outputs, img, classNames, classNumber):
+
+    toTrack = classNames[classNumber]
 
     # Neural Network Params
-    confThreshold = 0.65 # Lower value, more boxes (but worse confidence per box)
+    confThreshold = 0.3 # Lower value, more boxes (but worse confidence per box)
     nmsThreshold = 0.3 # Lower value, less overlaps
 
     hT, wT, _ = img.shape
@@ -139,7 +141,7 @@ def findFaceYolo(outputs, img, classNames):
         area = w * h
 
         
-        if(classNames[classIndices[i]] == 'Anton'):
+        if(classNames[classIndices[i]] == toTrack):
             returnIndices.append(i)
 
 
@@ -238,14 +240,18 @@ def trackFace(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slider
             drone.yaw_velocity = speed[3]
         else:
             drone.yaw_velocity = 0
+            drone.left_right_velocity = 0
             error[0] = 0
+          
     else:
         # Translation
         if cx != 0:
             drone.left_right_velocity = speed[0]
         else:
             drone.left_right_velocity = 0
+            drone.yaw_velocity = 0
             error[0] = 0
+            
 
     #  Up - down
     if cy != 0:
@@ -291,8 +297,9 @@ def droneData(droneStates):
             sock.close
             break
         
-def drawOSD(droneStates, frame, pulse, mode, trackOn):
+def drawOSD(droneStates, frame, pulse, mode, trackOn, classNames, classNumber):
     # pitch:0;roll:0;yaw:0;vgx:0;vgy:0;vgz:0;templ:82;temph:85;tof:48;h:0;bat:20;baro:163.98;time:0;agx:6.00;agy:-12.00;agz:-1003.00;  
+    
     
     
     states = droneStates[len(droneStates)-1].split(";")
@@ -351,6 +358,7 @@ def drawOSD(droneStates, frame, pulse, mode, trackOn):
         img[yStart:yEnd, xStart:xEnd] = icon
 
 
+
     w = frame.shape[1]
     h = frame.shape[0]
 
@@ -379,6 +387,7 @@ def drawOSD(droneStates, frame, pulse, mode, trackOn):
     # MODE
     cv2.putText(frame, 'Mode:', (954,650), cv2.FONT_HERSHEY_DUPLEX, 0.7, (255,255,255), 1)
     if trackOn:
+        cv2.putText(frame, (classNames[classNumber]) , (522, h-50), cv2.FONT_HERSHEY_DUPLEX, 1, (255,255,255), 1)
         if mode:
             cv2.putText(frame, 'rotation', (930,684), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,255), 1)
         else:
