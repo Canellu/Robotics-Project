@@ -371,7 +371,7 @@ def drawOSD(droneStates, frame, pulse, mode, trackOn):
     cv2.circle(frame, (w//2, h//2), 12, (255,255,255), 1)
 
      # TIME
-    cv2.putText(frame, ('0'+str(datetime.timedelta(seconds=int(time)))) , (486, 83), cv2.FONT_HERSHEY_DUPLEX, 1, (255,255,255), 1)
+    cv2.putText(frame, ('0'+str(datetime.timedelta(seconds=int(time)))) , (522, 83), cv2.FONT_HERSHEY_DUPLEX, 1, (255,255,255), 1)
 
     # FPS
     cv2.putText(frame, '720p', (166,684), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,255), 1)
