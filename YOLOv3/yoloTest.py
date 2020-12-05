@@ -1,11 +1,12 @@
 import cv2
 import numpy as np
+import time
 
 
 
 cap = cv2.VideoCapture(0) # Get Webcam feed
 whT = 416 # A parameter for image to blob conversion
-confThreshold = 0.7 # Lower value, more boxes (but worse confidence per box)
+confThreshold = 0.3 # Lower value, more boxes (but worse confidence per box)
 nmsThreshold = 0.3 # Lower value, less overlaps
 
 def rescale_frame(frame, percent=75):
@@ -16,14 +17,14 @@ def rescale_frame(frame, percent=75):
 
 
 # Import class names to list from coco.names
-classesFile = "anv.names"
+classesFile = "6c.names"
 classNames = []
 with open(classesFile, 'rt') as f:
     classNames = f.read().rstrip('\n').split('\n')
 
 # Set up model and network
-modelConfig = "yolov3_anv.cfg"
-modelWeights = "yolov3_anv.weights" 
+modelConfig = "6c.cfg"
+modelWeights = "6c.weights" 
 net = cv2.dnn.readNetFromDarknet(modelConfig, modelWeights)
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
@@ -60,6 +61,12 @@ def findObjects(outputs, img):
                             (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,0,255), 2) #Write class name and % on bounding box
 
 
+
+# FPS
+counter = 0
+FPS = 0
+startTime = time.time()
+
 # Capture webcam
 while True:
 
@@ -74,6 +81,18 @@ while True:
                                       # box is, rest is probability per classes) )
     findObjects(outputs,img)
     img = rescale_frame(img, percent=150)
+
+    counter+=1
+    if (time.time() - startTime) > 1 :
+        FPS = int(counter / (time.time() - startTime))
+        counter = 0
+        startTime = time.time()
+    
+    cv2.putText(img, 'FPS:', (166,650), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,255), 1)
+    cv2.putText(img, str(FPS), (228,650), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,255), 2)
+
+
+
     cv2.imshow('Image', img)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
