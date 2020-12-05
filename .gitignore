@@ -10,3 +10,6 @@ yolov3_only_anton.cfg
 yolov3_only_anton.weights
 anton.names
 __pycache__
+6c.cfg
+6c.names
+6c.weights
