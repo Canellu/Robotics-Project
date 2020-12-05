@@ -562,13 +562,13 @@ def plot(frameWidth, frameHeight, fig, ax, info, X, loop, plotInfo, plotKalman):
     # Return updated x,y,t array
     return plotInfo, plotKalman
 
-def kalman(info, XOld, POld, Q, R):
+def kalman(info, XOld, POld, Q, R, Xinit):
 
     # reminders
     # t: transpose
 
     if info[3] == 0: # Testing if object is within view
-        XNew = [480, 360, 180]
+        XNew = Xinit
         PNew = POld
 
     else:

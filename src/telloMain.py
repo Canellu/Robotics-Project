@@ -21,6 +21,7 @@ OSDon = True # Turn on and off OSD
 Q = np.array([[1.5, 0, 0], [0, 5, 0], [0, 0, 1.4]]) # Process noise
 R = np.array([[80, 0, 0], [0, 200, 0],[0, 0, 90]]) # Measurement noise
 X = np.array([480, 360, 180])
+XInit = np.array([480, 360, 180])
 P = np.array([[1, 0, 0],[0, 1, 0], [0, 0, 1]])
 
 
@@ -46,7 +47,7 @@ pulse = True # For Red dot on OSD to pulse
 
 # PID data
 pidY = [0.4, 0.6, 0] # Left right
-pidX = [0.6, 0.75, 0] # Forward back
+pidX = [0.4, 0.75, 0] # Forward back
 pidZ = [0.9, 1.2, 0] # Up down
 pidYaw = [0.7, 0.2, 0] # Rotate
 info = [0,0,0,0] # x, y, width, height
@@ -186,11 +187,7 @@ while connection:
         # img, info = findFace(img) # HAAR
         img, info = findFaceYolo(outputs, img, classNames, classNumber) # YOLO
 
-        # Kalman
-        # qVal = readSlider('Q Value', 'Display') # For testing purposes
-        # Q = np.array([[(qVal/100),0],[0,(qVal/100)]])
-        X, P = kalman(info, X, P, Q, R)
-
+    
         # Plotting center coordinates
         if plotOn:
             if (loopCount % updateCycle) == 0:
@@ -201,6 +198,12 @@ while connection:
         # Read slider data
         distance = readSlider('Distance', 'Display')
         
+        XInit[2] = 180 - (distance-50)*2
+
+        # Kalman
+        # qVal = readSlider('Q Value', 'Display') # For testing purposes
+        # Q = np.array([[(qVal/100),0],[0,(qVal/100)]])
+        X, P = kalman(info, X, P, Q, R, XInit)
         
         # Control drone movement to track object
         pInfo, pError = trackFace(drone, X, pInfo, frameWidth, frameHeight, pidY, pidX, pidZ, pidYaw, pError, distance, img, mode)
