@@ -7,7 +7,6 @@ import numpy as np
 
 # VARIABLES # ----------------------------------------
 
-
 # Control panel (ALL STATIC, DONT CHANGE)
 listener = None # To check wether listener thread is created
 keyPressed = None # Value of pressed keys
@@ -15,6 +14,7 @@ trackOn = False # True to track object, false otherwise
 mode = True  # True = Rotation, False = Translation
 safeQuit = False # Do not change value. Safety measures.
 plotOn = False # True to draw plots of X Y H.
+OSDon = True # Turn on and off OSD
 
 
 # Kalman variables, declarations
@@ -35,6 +35,12 @@ updateCycle = 3
 # Drone data
 droneStates = []
 
+# FPS
+counter = 0
+FPS = 0
+startTime = time.time()
+pulse = True # For Red dot on OSD to pulse
+
 
 # PID data
 pidY = [0.4, 0.6, 0] # Left right
@@ -46,47 +52,34 @@ pInfo = [0, 0, 0] # x, y, height
 pError = [0, 0, 0] # yaw, height, distance
 
 
+# VARIABLES END # -----------------------------------------------
+
 # Keyboard listener
 def on_release(key):
     global keyPressed
     keyPressed = key.char
     print(f"KEY PRESSED: {keyPressed}")
 
-def CheckWhichKeyIsPressed():
-    global listener
-    
+def CheckWhichKeyIsPressed():  
+    global listener 
     if listener == None:  
         listener = Listener(on_release=on_release,suppress=True)
         listener.start()
         print("CREATING LISTENER THREAD\n\n")
 
 
-
-# YOLO STUFF
-whT = 320 # A parameter for image to blob conversion
-
-# Import class names to list from coco.names
-classesFile = "../YOLOv3/anton.names"
-classNames = []
-with open(classesFile, 'rt') as f:
-    classNames = f.read().rstrip('\n').split('\n')
-
-# Set up model and network
-modelConfig = "../YOLOv3/yolov3_only_anton.cfg"
-modelWeights = "../YOLOv3/yolov3_only_anton.weights" 
-net = cv2.dnn.readNetFromDarknet(modelConfig, modelWeights)
-net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
-
-
-## MAIN PROGRAM STARTS HERE ##
+## MAIN PROGRAM STARTS HERE ## ----------------------------------
 
 # Get drone object
 connection, drone = initializeTello()
 
-# Start data recieve thread
+# Create objects 
 if connection:
-    # OSD
+
+    # YOLO variables
+    classNames, net, whT = initYOLO()
+
+    # OSD Thread
     dataThread = threading.Thread(target=droneData, args=(droneStates,), daemon=True)
     dataThread.start()
 
@@ -95,14 +88,15 @@ if connection:
         fig, ax = plt.subplots(1)
         fig.show()
 
-    # Distance slider
-    distanceSlider("Display") # Creates a slider
+
+    # Create Distance slider
+    distanceSlider("Display") 
+    
     #qSlider("Display")
 
 
-start_time = time.time()
-counter = 0
-FPS = 0
+
+
 # Loop
 while connection:
     
@@ -122,8 +116,6 @@ while connection:
                                         # (rows , columns) = (boxnumber , ( 0-4 = cx,cy,w,h, score of how 
                                         # likely the box contain an object and how accurate the boundary 
                                         # box is, rest is probability per classes) )
-
-        
 
         # Tracking methods: HAAR, YOLO
         # img, info = findFace(img) # HAAR
@@ -146,24 +138,29 @@ while connection:
         
         
         # Control drone movement to track object
-        
-
         pInfo, pError = trackFace(drone, X, pInfo, frameWidth, frameHeight, pidY, pidX, pidZ, pidYaw, pError, distance, img, mode)
 
 
-    # drawOSD(droneStates, img)
-
-
-    # FPS CALCS!
-    counter+=1
-    if (time.time() - start_time) > 1 :
-        FPS = int(counter / (time.time() - start_time))
-        if FPS > 30:
-            FPS = 30
-        counter = 0
-        start_time = time.time()
     
-    cv2.putText(img, (f'FPS: {FPS}'), (50,300), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2)
+
+    if OSDon:
+        # FPS
+        counter+=1
+        if (time.time() - startTime) > 1 :
+            FPS = int(counter / (time.time() - startTime))
+            if FPS > 30:
+                FPS = 30
+            counter = 0
+            startTime = time.time()
+            pulse = not pulse
+        
+    
+        img = cv2.copyMakeBorder(img, 20, 20, 120, 120, cv2.BORDER_CONSTANT, value=(0,0,0))
+        cv2.putText(img, 'FPS:', (166,650), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,255), 1)
+        cv2.putText(img, str(FPS), (228,650), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,255), 2)
+        
+        drawOSD(droneStates, img, pulse, mode, trackOn)
+
     # Show frames on window for 1ms
     cv2.imshow('Display', img)
     cv2.waitKey(1)
@@ -173,7 +170,6 @@ while connection:
 
     # To land and end connection
     if keyPressed == 'q':
-        drone.land()
         drone.end()
         plt.close('all')
         # print(f"VARIANCE X: {np.var(plotInfo[0])} LEN: {len(plotInfo[0])}") # Measurement variance in X
@@ -203,6 +199,10 @@ while connection:
         mode = True
     if keyPressed == '2': # Translation
         mode = False
+    
+    # Enable/Disable OSD
+    if keyPressed == 'o':
+        OSDon = not OSDon
 
     
     keyPressed = None
