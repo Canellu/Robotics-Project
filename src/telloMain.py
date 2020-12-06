@@ -51,7 +51,7 @@ pidY = [0.4, 0.6, 0] # Left right
 pidX = [0.4, 0.75, 0] # Forward back
 pidZ = [0.9, 1.2, 0] # Up down
 pidYaw = [0.7, 0.2, 0] # Rotate
-info = [0,0,0,0] # x, y, width, height
+info = [0,0,0] # x, y, width, height
 pInfo = [0, 0, 0] # x, y, height
 pError = [0, 0, 0] # yaw, height, distance
 
@@ -184,10 +184,10 @@ while connection:
                                         # likely the box contain an object and how accurate the boundary 
                                         # box is, rest is probability per classes) )
 
-        # Tracking methods: HAAR, YOLO
-        # img, info = findFace(img) # HAAR
-        img, info = findFaceYolo(outputs, img, classNames, classNumber) # YOLO
-
+        # Tracking methods: HAAR, YOLO, HSV
+        # info = findFace(img) # HAAR
+        info = findFaceYolo(outputs, img, classNames, classNumber) # YOLO
+        # info = trackHSV(img) # HSV
 
         
         distance = readSlider('Distance', 'Display') # Read slider data
@@ -212,9 +212,7 @@ while connection:
         updateMovement()
     
 
-    # HSV TRACK TEST
-    x, y, rad = trackHSV(img)
-    print(f'{x} {y} {rad}')
+    
 
     if OSDon:
         # FPS

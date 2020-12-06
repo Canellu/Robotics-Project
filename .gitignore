@@ -25,3 +25,5 @@ yolov3_only_anton.weights
 a.names
 a.weights
 a.cfg
+tiny.cfg
+tiny.weights
