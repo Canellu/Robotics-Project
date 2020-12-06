@@ -23,3 +23,5 @@ yolov3_only_anton.weights
 6c.cfg
 6c.weights
 6c.names
+tiny.cfg
+tiny.weights

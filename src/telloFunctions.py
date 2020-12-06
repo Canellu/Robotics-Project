@@ -59,6 +59,7 @@ def findFace(img):
 
     myFaceListC = []
     myFaceListArea = []
+    returnArray = []
 
     for(x,y,w,h) in faces:
 
@@ -76,10 +77,11 @@ def findFace(img):
 
         # finding closest face (biggest area)
         i = myFaceListArea.index(max(myFaceListArea))
-        return img, myFaceListC[i]
+        returnArray = [myFaceListC[i][0],myFaceListC[i][1],myFaceListC[i][3]]
+        return returnArray
     else:
 
-        return img,[0,0,0,0]
+        return [0,0,0]
 
 
 
@@ -88,14 +90,14 @@ def initYOLO():
     whT = 320 # A parameter for image to blob conversion
 
     # Import class names to list from coco.names
-    classesFile = "../YOLOv3/anton.names"
+    classesFile = "../YOLOv3/coco.names"
     classNames = []
     with open(classesFile, 'rt') as f:
         classNames = f.read().rstrip('\n').split('\n')
 
     # Set up model and network
-    modelConfig = "../YOLOv3/yolov3_only_anton.cfg"
-    modelWeights = "../YOLOv3/yolov3_only_anton.weights" 
+    modelConfig = "../YOLOv3/tiny.cfg"
+    modelWeights = "../YOLOv3/tiny.weights" 
     net = cv2.dnn.readNetFromDarknet(modelConfig, modelWeights)
     net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
     net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
@@ -117,6 +119,7 @@ def findFaceYolo(outputs, img, classNames, classNumber):
     confs = []
     returnIndices = []
     returnArea = []
+    returnArray = []
 
     for output in outputs: # Go through each output layer (3 layers)
         for det in output: # Go through each detection in layers (rows per layer: 300 first layer, 1200 second layer, 4800 third layer)
@@ -159,10 +162,11 @@ def findFaceYolo(outputs, img, classNames, classNumber):
         cv2.putText(img, f'{classNames[classIndices[i]].upper()} {int(confs[i]*100)}%',
                    (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,0,255), 2) #Write class name and % on bounding box
 
+        returnArray = [bbox[i][0],bbox[i][1],bbox[i][3]]
 
-        return img, (bbox[i])
+        return returnArray
     else:
-        return img, ([0,0,0,0])
+        return ([0,0,0])
 
 def trackFace(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, sliderVal, frame, mode):
 
@@ -567,13 +571,13 @@ def kalman(info, XOld, POld, Q, R, Xinit):
     # reminders
     # t: transpose
 
-    if info[3] == 0: # Testing if object is within view
+    if info[2] == 0: # Testing if object is within view
         XNew = Xinit
         PNew = POld
 
     else:
         # state matrix measurements
-        XM = np.array([info[0], info[1], info[3]]) # X measured
+        XM = np.array([info[0], info[1], info[2]]) # X measured
 
         # Transform matrices: A,B,C,I = I3
         # A = np.eye(3)
