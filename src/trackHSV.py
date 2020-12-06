@@ -15,6 +15,7 @@ import time
 lowerHSV = (23, 141, 160)
 upperHSV = (32, 251, 237)
 
+
 def trackHSV(frame):
 
     center = (0,0)
@@ -35,8 +36,8 @@ def trackHSV(frame):
         M = cv2.moments(c)
         center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
 
-        if radius > 10:
+        if radius > 20:
             cv2.circle(frame, (int(x), int(y)), int(radius), (0,255,255), 2)
     
 
-    return center, radius
+    return center[0], center[1], radius

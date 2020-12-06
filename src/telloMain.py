@@ -1,4 +1,5 @@
 from telloFunctions import *
+from trackHSV import *
 from pynput.keyboard import Key, Listener
 import time
 import cv2
@@ -187,38 +188,41 @@ while connection:
         # img, info = findFace(img) # HAAR
         img, info = findFaceYolo(outputs, img, classNames, classNumber) # YOLO
 
-    
-        # Plotting center coordinates
-        if plotOn:
-            if (loopCount % updateCycle) == 0:
-                plotInfo, plotKalman = plot(frameWidth, frameHeight, fig, ax, info, X, loopCount, plotInfo, plotKalman)
-            loopCount += 1
 
-
-        # Read slider data
-        distance = readSlider('Distance', 'Display')
         
-        XInit[2] = 180 - (distance-50)*2
+        distance = readSlider('Distance', 'Display') # Read slider data
+        XInit[2] = 180 - (distance-50)*2 # Reset init values based on slider
 
         # Kalman
         # qVal = readSlider('Q Value', 'Display') # For testing purposes
-        # Q = np.array([[(qVal/100),0],[0,(qVal/100)]])
+        # Q = np.array([[(qVal/100),0,0],[0,(qVal/100),0], [0,0,(qVal/100)]])
         X, P = kalman(info, X, P, Q, R, XInit)
         
         # Control drone movement to track object
         pInfo, pError = trackFace(drone, X, pInfo, frameWidth, frameHeight, pidY, pidX, pidZ, pidYaw, pError, distance, img, mode)
 
+
+         # Plotting center coordinates
+        if plotOn:
+            if (loopCount % updateCycle) == 0:
+                plotInfo, plotKalman = plot(frameWidth, frameHeight, fig, ax, info, X, loopCount, plotInfo, plotKalman)
+            loopCount += 1
+
     else:
         updateMovement()
     
+
+    # HSV TRACK TEST
+    x, y, rad = trackHSV(img)
+    print(f'{x} {y} {rad}')
 
     if OSDon:
         # FPS
         counter+=1
         if (time.time() - startTime) > 1 :
             FPS = int(counter / (time.time() - startTime))
-            if FPS > 30:
-                FPS = 30
+            # if FPS > 30:
+            #     FPS = 30
             counter = 0
             startTime = time.time()
             pulse = not pulse

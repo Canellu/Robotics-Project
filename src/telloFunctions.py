@@ -174,7 +174,7 @@ def trackFace(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slider
     
 
     error = [0,0,0] # yaw, height, distance (pixels)
-    speed = [0,0,100,0] # leftright, forwardback, updown, rotate
+    speed = [0,0,0,0] # leftright, forwardback, updown, rotate
 
 
     # current info
