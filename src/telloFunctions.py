@@ -88,14 +88,14 @@ def initYOLO():
     whT = 320 # A parameter for image to blob conversion
 
     # Import class names to list from coco.names
-    classesFile = "../YOLOv3/6c.names"
+    classesFile = "../YOLOv3/anton.names"
     classNames = []
     with open(classesFile, 'rt') as f:
         classNames = f.read().rstrip('\n').split('\n')
 
     # Set up model and network
-    modelConfig = "../YOLOv3/6c.cfg"
-    modelWeights = "../YOLOv3/6c.weights" 
+    modelConfig = "../YOLOv3/yolov3_only_anton.cfg"
+    modelWeights = "../YOLOv3/yolov3_only_anton.weights" 
     net = cv2.dnn.readNetFromDarknet(modelConfig, modelWeights)
     net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
     net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
