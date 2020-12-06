@@ -15,6 +15,14 @@ import time
 lowerHSV = (19,63,114)
 upperHSV = (60,179,255)
 
+tomatoMin = (25,79,81)
+tomatoMax = (37,255,255)
+
+tennisMin = (26, 70, 84)
+tennisMax = (35, 225, 236)
+
+
+
 
 def trackHSV(frame):
 
@@ -23,7 +31,7 @@ def trackHSV(frame):
     
     blurred = cv2.GaussianBlur(frame, (11, 11), 0)
     hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
-    mask = cv2.inRange(hsv, lowerHSV, upperHSV)
+    mask = cv2.inRange(hsv, tennisMin, tennisMax)
     mask = cv2.erode(mask, None, iterations=2)
     mask = cv2.dilate(mask, None, iterations=2)
 
