@@ -5,6 +5,8 @@ import time
 import cv2
 import threading
 import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
 
 # VARIABLES # ----------------------------------------
 
@@ -14,7 +16,7 @@ keyPressed = None # Value of pressed keys
 trackOn = False # True to track object, false otherwise
 mode = True  # True = Rotation, False = Translation
 safeQuit = False # Do not change value. Safety measures.
-plotOn = False # True to draw plots of X Y H.
+plotOn = True # True to draw plots of X Y H.
 OSDon = True # Turn on and off OSD
 
 
@@ -23,13 +25,15 @@ Q = np.array([[1.5, 0, 0], [0, 5, 0], [0, 0, 1.4]]) # Process noise
 R = np.array([[80, 0, 0], [0, 200, 0],[0, 0, 90]]) # Measurement noise
 X = np.array([480, 360, 180])
 XInit = np.array([480, 360, 180])
-P = np.array([[1, 0, 0],[0, 1, 0], [0, 0, 1]])
+P = np.array([[15, 0, 0],[0, 35, 0], [0, 0, 15]])
 
 
 # Plotting variables, parameters
 countArray = []
 plotInfo = [[],[],[],[]] # [x,y,h,loopCount] Do not change value
 plotKalman = [[],[],[]] # Do not change value
+plotPID = [[],[],[]] # Do not change value
+plotError = [[],[],[]] # Do not change value
 loopCount = 0
 updateCycle = 3
 
@@ -47,10 +51,10 @@ pulse = True # For Red dot on OSD to pulse
 
 
 # PID data
-pidY = [0.4, 0.6, 0] # Left right
-pidX = [0.4, 0.75, 0] # Forward back
-pidZ = [0.9, 1.2, 0] # Up down
-pidYaw = [0.7, 0.2, 0] # Rotate
+pidY = [0.5, 0, 0] # Left right
+pidX = [0.5, 0, 0] # Forward back
+pidZ = [0.7, 0, 0] # Up down
+pidYaw = [0.6, 0, 0.6] # Rotate
 info = [0,0,0] # x, y, width, height
 pInfo = [0, 0, 0] # x, y, height
 pError = [0, 0, 0] # yaw, height, distance
@@ -151,6 +155,10 @@ if connection:
     # Create plot
     if plotOn:
         fig, ax = plt.subplots(1)
+        mngr = plt.get_current_fig_manager()
+        geom = mngr.window.geometry()
+        x,y,dx,dy = geom.getRect()
+        mngr.window.setGeometry(50,300,dx, dy)
         fig.show()
 
 
@@ -186,8 +194,10 @@ while connection:
 
         # Tracking methods: HAAR, YOLO, HSV
         # info = findFace(img) # HAAR
-        info = findFaceYolo(outputs, img, classNames, classNumber) # YOLO
-        # info = trackHSV(img) # HSV
+        # info = findFaceYolo(outputs, img, classNames, classNumber) # YOLO
+        info = trackHSV(img) # HSV
+        
+
 
         
         distance = readSlider('Distance', 'Display') # Read slider data
@@ -199,13 +209,13 @@ while connection:
         X, P = kalman(info, X, P, Q, R, XInit)
         
         # Control drone movement to track object
-        pInfo, pError = trackFace(drone, X, pInfo, frameWidth, frameHeight, pidY, pidX, pidZ, pidYaw, pError, distance, img, mode)
+        pInfo, pError, infoPID = trackFace(drone, X, pInfo, frameWidth, frameHeight, pidY, pidX, pidZ, pidYaw, pError, distance, img, mode)
 
 
          # Plotting center coordinates
         if plotOn:
             if (loopCount % updateCycle) == 0:
-                plotInfo, plotKalman = plot(frameWidth, frameHeight, fig, ax, info, X, loopCount, plotInfo, plotKalman)
+                plotInfo, plotKalman = plot(frameWidth, frameHeight, fig, ax, info, X, loopCount, plotInfo, plotKalman, infoPID, pError, plotPID, plotError)
             loopCount += 1
 
     else:

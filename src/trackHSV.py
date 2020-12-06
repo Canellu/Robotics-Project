@@ -12,8 +12,8 @@ import time
 #define the lower and upper boundaries of the "green"
 # ball in the HSV color space, then initialize the
 # list of tracked points
-lowerHSV = (23, 141, 160)
-upperHSV = (32, 251, 237)
+lowerHSV = (19,63,114)
+upperHSV = (60,179,255)
 
 
 def trackHSV(frame):
