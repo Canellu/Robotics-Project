@@ -134,21 +134,6 @@ def CheckWhichKeyIsPressed():
 
 ## MAIN PROGRAM STARTS HERE ## ----------------------------------
 
-# YOLO STUFF
-whT = 416 # A parameter for image to blob conversion
-
-# Import class names to list from coco.names
-classesFile = "../YOLOv3/face.names"
-classNames = []
-with open(classesFile, 'rt') as f:
-    classNames = f.read().rstrip('\n').split('\n')
-
-# Set up model and network
-modelConfig = "../YOLOv3/face.cfg"
-modelWeights = "../YOLOv3/face.weights" 
-net = cv2.dnn.readNetFromDarknet(modelConfig, modelWeights)
-net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 # Get drone object
 connection, drone = initializeTello()
 
