@@ -205,41 +205,42 @@ def trackFace(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slider
     # PID
     if mode:
         # rotation - Yaw
-        speed[3] = pidYaw[0]*error[0] + pidYaw[2]*(error[0]-pError[0])
+        speed[3] = pidYaw[0]*error[0] + pidYaw[1]*(error[0]+pError[0]) + pidYaw[2]*(error[0]-pError[0])
         speed[3] = int(np.clip(speed[3],-100, 100))
+        
     else:
         # Y - left/right
-        speed[0] = pidY[0]*error[0] + pidY[2]*(error[0]-pError[0])
+        speed[0] = pidY[0]*error[0] + pidY[1]*(error[0]+pError[0]) + pidY[2]*(error[0]-pError[0])
         speed[0] = int(np.clip(speed[0],-100, 100))
     
     # X - forward/back
-    speed[1] = (pidX[0]*error[1] + pidX[2]*(error[1]-pError[1]))*(-1)
+    speed[1] = ( (pidX[0]*error[1]) + (pidX[1]*(error[1]+pError[1])) + (pidX[2]*(error[1]-pError[1])) ) * (-1)
     speed[1] = int(np.clip(speed[1],-100, 100))
     
     # Z - up/down
-    speed[2] = (pidZ[0]*error[2] + pidZ[2]*(error[2]-pError[2]))*(-1)
+    speed[2] = ( (pidZ[0]*error[2]) + (pidZ[1]*(error[2]-pError[2])) + (pidZ[2]*(error[2]-pError[2])) ) * (-1)
     speed[2] = int(np.clip(speed[2],-100, 100))
 
 
 
     # Rotation / Translation
-    if mode:
-        # Rotation
-        if cx != 0:
-            drone.yaw_velocity = speed[3]
-        else:
-            drone.yaw_velocity = 0
-            drone.left_right_velocity = 0
-            error[0] = 0
+    # if mode:
+    #     # Rotation
+    #     if cx != 0:
+    #         drone.yaw_velocity = speed[3]
+    #     else:
+    #         drone.yaw_velocity = 0
+    #         drone.left_right_velocity = 0
+    #         error[0] = 0
           
-    else:
-        # Translation
-        if cx != 0:
-            drone.left_right_velocity = speed[0]
-        else:
-            drone.left_right_velocity = 0
-            drone.yaw_velocity = 0
-            error[0] = 0
+    # else:
+    #     # Translation
+    #     if cx != 0:
+    #         drone.left_right_velocity = speed[0]
+    #     else:
+    #         drone.left_right_velocity = 0
+    #         drone.yaw_velocity = 0
+    #         error[0] = 0
 
     # # Forward - Back
     # if bh != 0:
@@ -500,7 +501,7 @@ def plot(frameWidth, frameHeight, fig, ax, info, X, loop, plotInfo, plotKalman, 
 
 
     # defining axes
-    x_axis = np.linspace(-100, 100, num=10)
+    x_axis = np.linspace(0, frameWidth, num=5)
     y_axis = np.linspace(frameHeight, 0, num=5)
 
     # limiting to 100 points in array
@@ -545,6 +546,8 @@ def plot(frameWidth, frameHeight, fig, ax, info, X, loop, plotInfo, plotKalman, 
     
 
     # Plotting
+
+
     # PID vs Error iteration
     ax.cla()
     ax.plot(plotPID[0], plotInfo[3], color='b')
@@ -552,14 +555,14 @@ def plot(frameWidth, frameHeight, fig, ax, info, X, loop, plotInfo, plotKalman, 
     ax.set_xticks(x_axis)
     ax.set_ylim(bottom=max(0, loop-100), top=loop+100)
 
-    # x-axis vs loop iteration
+    # # x-axis vs loop iteration
     # ax.cla()
     # ax.plot(plotInfo[0], plotInfo[3], color='r')
     # ax.plot(plotKalman[0], plotInfo[3], color='b')
     # ax.set_xticks(x_axis)
     # ax.set_ylim(bottom=max(0, loop-100), top=loop+100)
 
-    # y-axis vs loop iteration
+    # # y-axis vs loop iteration
     # ax.cla()
     # ax.plot(plotInfo[3], plotInfo[1], color='r')
     # ax.plot(plotInfo[3], plotKalman[1], color='b')
@@ -567,7 +570,7 @@ def plot(frameWidth, frameHeight, fig, ax, info, X, loop, plotInfo, plotKalman, 
     # ax.set_xlim(left=max(0, loop-100), right=loop+100)
     # ax.set_yticks(y_axis)
 
-    # # forwardback vs loop iteration   
+    # forwardback vs loop iteration   
     # ax.cla()
     # ax.plot(plotInfo[3], plotInfo[2], color='r')
     # ax.plot(plotInfo[3], plotKalman[2], color='b')

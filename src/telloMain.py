@@ -16,7 +16,7 @@ keyPressed = None # Value of pressed keys
 trackOn = False # True to track object, false otherwise
 mode = True  # True = Rotation, False = Translation
 safeQuit = False # Do not change value. Safety measures.
-plotOn = True # True to draw plots of X Y H.
+plotOn = False # True to draw plots of X Y H.
 OSDon = True # Turn on and off OSD
 
 
@@ -40,7 +40,7 @@ updateCycle = 3
 
 # Drone data
 droneStates = []
-S = 30
+S = 50
 classNumber = 0
 
 # FPS
@@ -53,8 +53,8 @@ pulse = True # For Red dot on OSD to pulse
 # PID data
 pidY = [0.5, 0, 0] # Left right
 pidX = [0.5, 0, 0] # Forward back
-pidZ = [0.7, 0, 0] # Up down
-pidYaw = [0.6, 0, 0.6] # Rotate
+pidZ = [0.42, 0.1, 0] # Up down
+pidYaw = [0.4, 0.1, 0.4] # Rotate
 info = [0,0,0] # x, y, width, height
 pInfo = [0, 0, 0] # x, y, height
 pError = [0, 0, 0] # yaw, height, distance
@@ -205,7 +205,7 @@ while connection:
 
         # Kalman
         # qVal = readSlider('Q Value', 'Display') # For testing purposes
-        # Q = np.array([[(qVal/100),0,0],[0,(qVal/100),0], [0,0,(qVal/100)]])
+        # Q = np.array([[(qVal/50),0,0],[0,(qVal/50),0], [0,0,(qVal/50)]])
         X, P = kalman(info, X, P, Q, R, XInit)
         
         # Control drone movement to track object
@@ -219,6 +219,7 @@ while connection:
             loopCount += 1
 
     else:
+
         updateMovement()
     
 
@@ -271,6 +272,14 @@ while connection:
         trackOn = True
     elif keyPressed == 'm':
         trackOn = False
+        drone.left_right_velocity = 0
+        drone.for_back_velocity = 0
+        drone.up_down_velocity = 0
+        drone.yaw_velocity = 0
+        drone.send_rc_control(drone.left_right_velocity,
+                              drone.for_back_velocity,
+                              drone.up_down_velocity,
+                              drone.yaw_velocity)
 
     # Change track mode
     elif keyPressed == '1': # Rotation     
