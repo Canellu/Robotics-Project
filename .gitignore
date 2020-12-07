@@ -1,5 +1,5 @@
-yolov3_anv.weights
-yolov3_anv.cfg
+anv.weights
+anv.cfg
 yolov3.weights
 yolov3-tiny.weights
 anv.names
@@ -16,10 +16,14 @@ __pycache__
 obj.names
 yolov3_custom.cfg
 yolov3_custom.weights
-__pycache__
 anton.names
 yolov3_only_anton.cfg
 yolov3_only_anton.weights
 6c.cfg
 6c.weights
 6c.names
+a.names
+a.weights
+a.cfg
+tiny.cfg
+tiny.weights

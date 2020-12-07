@@ -5,6 +5,8 @@ import time
 import cv2
 import threading
 import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
 
 # VARIABLES # ----------------------------------------
 
@@ -23,20 +25,22 @@ Q = np.array([[1.5, 0, 0], [0, 5, 0], [0, 0, 1.4]]) # Process noise
 R = np.array([[80, 0, 0], [0, 200, 0],[0, 0, 90]]) # Measurement noise
 X = np.array([480, 360, 180])
 XInit = np.array([480, 360, 180])
-P = np.array([[1, 0, 0],[0, 1, 0], [0, 0, 1]])
+P = np.array([[15, 0, 0],[0, 35, 0], [0, 0, 15]])
 
 
 # Plotting variables, parameters
 countArray = []
 plotInfo = [[],[],[],[]] # [x,y,h,loopCount] Do not change value
 plotKalman = [[],[],[]] # Do not change value
+plotPID = [[],[],[]] # Do not change value
+plotError = [[],[],[]] # Do not change value
 loopCount = 0
 updateCycle = 3
 
 
 # Drone data
 droneStates = []
-S = 30
+S = 50
 classNumber = 0
 
 # FPS
@@ -47,11 +51,11 @@ pulse = True # For Red dot on OSD to pulse
 
 
 # PID data
-pidY = [0.4, 0.6, 0] # Left right
-pidX = [0.4, 0.75, 0] # Forward back
-pidZ = [0.9, 1.2, 0] # Up down
-pidYaw = [0.7, 0.2, 0] # Rotate
-info = [0,0,0,0] # x, y, width, height
+pidY = [0.5, 0, 0] # Left right
+pidX = [0.5, 0, 0] # Forward back
+pidZ = [0.42, 0.1, 0] # Up down
+pidYaw = [0.4, 0.1, 0.4] # Rotate
+info = [0,0,0] # x, y, width, height
 pInfo = [0, 0, 0] # x, y, height
 pError = [0, 0, 0] # yaw, height, distance
 
@@ -151,6 +155,10 @@ if connection:
     # Create plot
     if plotOn:
         fig, ax = plt.subplots(1)
+        mngr = plt.get_current_fig_manager()
+        geom = mngr.window.geometry()
+        x,y,dx,dy = geom.getRect()
+        mngr.window.setGeometry(50,300,dx, dy)
         fig.show()
 
 
@@ -184,9 +192,11 @@ while connection:
                                         # likely the box contain an object and how accurate the boundary 
                                         # box is, rest is probability per classes) )
 
-        # Tracking methods: HAAR, YOLO
-        # img, info = findFace(img) # HAAR
-        img, info = findFaceYolo(outputs, img, classNames, classNumber) # YOLO
+        # Tracking methods: HAAR, YOLO, HSV
+        # info = findFace(img) # HAAR
+        # info = findFaceYolo(outputs, img, classNames, classNumber) # YOLO
+        info = trackHSV(img) # HSV
+        
 
 
         
@@ -195,26 +205,25 @@ while connection:
 
         # Kalman
         # qVal = readSlider('Q Value', 'Display') # For testing purposes
-        # Q = np.array([[(qVal/100),0,0],[0,(qVal/100),0], [0,0,(qVal/100)]])
+        # Q = np.array([[(qVal/50),0,0],[0,(qVal/50),0], [0,0,(qVal/50)]])
         X, P = kalman(info, X, P, Q, R, XInit)
         
         # Control drone movement to track object
-        pInfo, pError = trackFace(drone, X, pInfo, frameWidth, frameHeight, pidY, pidX, pidZ, pidYaw, pError, distance, img, mode)
+        pInfo, pError, infoPID = trackFace(drone, X, pInfo, frameWidth, frameHeight, pidY, pidX, pidZ, pidYaw, pError, distance, img, mode)
 
 
          # Plotting center coordinates
         if plotOn:
             if (loopCount % updateCycle) == 0:
-                plotInfo, plotKalman = plot(frameWidth, frameHeight, fig, ax, info, X, loopCount, plotInfo, plotKalman)
+                plotInfo, plotKalman = plot(frameWidth, frameHeight, fig, ax, info, X, loopCount, plotInfo, plotKalman, infoPID, pError, plotPID, plotError)
             loopCount += 1
 
     else:
+
         updateMovement()
     
 
-    # HSV TRACK TEST
-    x, y, rad = trackHSV(img)
-    print(f'{x} {y} {rad}')
+    
 
     if OSDon:
         # FPS
@@ -263,6 +272,14 @@ while connection:
         trackOn = True
     elif keyPressed == 'm':
         trackOn = False
+        drone.left_right_velocity = 0
+        drone.for_back_velocity = 0
+        drone.up_down_velocity = 0
+        drone.yaw_velocity = 0
+        drone.send_rc_control(drone.left_right_velocity,
+                              drone.for_back_velocity,
+                              drone.up_down_velocity,
+                              drone.yaw_velocity)
 
     # Change track mode
     elif keyPressed == '1': # Rotation     
