@@ -16,7 +16,6 @@ def rescale_frame(frame, percent=75):
     return cv2.resize(frame, dim, interpolation =cv2.INTER_AREA)
    
 
-
 def initializeTello():
 
     drone = Tello()
@@ -29,21 +28,15 @@ def initializeTello():
         drone.yaw_velocity = 0
         drone.speed = 0
 
-
         drone.streamoff()
         drone.streamon()
-        print(f"BATTERY: {drone.get_battery()}")
-        print("---- Connecting to drone Succeeded ----\n")
-
-    else:
-        print("\n---- Connecting to drone Failed ----\n")
+        print(f"\n\n\n\n\nBATTERY: {drone.get_battery()}")
 
     return connection, drone
 
 
-
 def telloGetFrame(drone):
-
+    
     telloFrame = drone.get_frame_read()
     telloFrame = telloFrame.frame
 
@@ -74,20 +67,17 @@ def findFace(img):
         myFaceListC.append([cx, cy, w, h])
 
     if len(myFaceListArea) != 0:
-
         # finding closest face (biggest area)
         i = myFaceListArea.index(max(myFaceListArea))
         returnArray = [myFaceListC[i][0],myFaceListC[i][1],myFaceListC[i][3]]
         return returnArray
     else:
-
         return [0,0,0]
-
 
 
 def initYOLO():
     # YOLO STUFF
-    whT = 160 # A parameter for image to blob conversion
+    whT = 416 # A parameter for image to blob conversion
 
     # Import class names to list from coco.names
     classesFile = "../YOLOv3/a.names"
@@ -143,7 +133,7 @@ def findFaceYolo(outputs, img, classNames, classNumber):
         x, y, w, h = box[0], box[1], box[2], box[3] # Extract x, y, width, height
         area = w * h
 
-        
+            
         if(classNames[classIndices[i]] == toTrack):
             returnIndices.append(i)
 
@@ -161,12 +151,12 @@ def findFaceYolo(outputs, img, classNames, classNumber):
         cv2.rectangle(img, (x,y), (x+w,y+h), (255,0,255), 2) # Draw bounding box
         cv2.putText(img, f'{classNames[classIndices[i]].upper()} {int(confs[i]*100)}%',
                    (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,0,255), 2) #Write class name and % on bounding box
-
         returnArray = [bbox[i][0],bbox[i][1],bbox[i][3]]
 
         return returnArray
     else:
         return ([0,0,0])
+
 
 def trackFace(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, sliderVal, frame, mode):
 
@@ -224,30 +214,30 @@ def trackFace(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slider
 
 
     # Rotation / Translation
-    # if mode:
-    #     # Rotation
-    #     if cx != 0:
-    #         drone.yaw_velocity = speed[3]
-    #     else:
-    #         drone.yaw_velocity = 0
-    #         drone.left_right_velocity = 0
-    #         error[0] = 0
+    if mode:
+        # Rotation
+        if cx != 0:
+            drone.yaw_velocity = speed[3]
+        else:
+            drone.yaw_velocity = 0
+            drone.left_right_velocity = 0
+            error[0] = 0
           
-    # else:
-    #     # Translation
-    #     if cx != 0:
-    #         drone.left_right_velocity = speed[0]
-    #     else:
-    #         drone.left_right_velocity = 0
-    #         drone.yaw_velocity = 0
-    #         error[0] = 0
+    else:
+        # Translation
+        if cx != 0:
+            drone.left_right_velocity = speed[0]
+        else:
+            drone.left_right_velocity = 0
+            drone.yaw_velocity = 0
+            error[0] = 0
 
-    # # Forward - Back
-    # if bh != 0:
-    #     drone.for_back_velocity = speed[1]
-    # else:
-    #     drone.for_back_velocity = 0
-    #     error[1] = 0       
+    # Forward - Back
+    if bh != 0:
+        drone.for_back_velocity = speed[1]
+    else:
+        drone.for_back_velocity = 0
+        error[1] = 0       
 
     #  Up - down
     if cy != 0:
@@ -284,18 +274,18 @@ def droneData(droneStates):
     while True:
         try:
             data, server = sock.recvfrom(1518)
-            if count >= 100:
+            if count >= 10:
                 droneStates.pop(0)
             droneStates.append(data.decode(encoding="utf-8"))
         except Exception as err:
             print(err)
             sock.close
             break
+
+
         
 def drawOSD(droneStates, frame, pulse, mode, trackOn, classNames, classNumber):
     # pitch:0;roll:0;yaw:0;vgx:0;vgy:0;vgz:0;templ:82;temph:85;tof:48;h:0;bat:20;baro:163.98;time:0;agx:6.00;agy:-12.00;agz:-1003.00;  
-    
-    
     
     states = droneStates[len(droneStates)-1].split(";")
     pitch = states[0][6:] 
@@ -511,7 +501,6 @@ def plot(frameWidth, frameHeight, fig, ax, info, X, loop, plotInfo, plotKalman, 
             plotKalman[i].pop(0)
             plotPID[i].pop(0)
             plotError[i].pop(0)
-           
 
         plotInfo[3].pop(0)
         
@@ -546,36 +535,40 @@ def plot(frameWidth, frameHeight, fig, ax, info, X, loop, plotInfo, plotKalman, 
     
 
     # Plotting
-
+    fig.suptitle('Measurement vs Kalman', fontsize=16)
 
     # PID vs Error iteration
-    ax.cla()
-    ax.plot(plotPID[0], plotInfo[3], color='b')
-    ax.plot(plotError[0], plotInfo[3], color='r')
-    ax.set_xticks(x_axis)
-    ax.set_ylim(bottom=max(0, loop-100), top=loop+100)
+    ax[0].title.set_text('PID vs Error')
+    ax[0].cla()
+    ax[0].plot(plotPID[0], plotInfo[3], color='b')
+    ax[0].plot(plotError[0], plotInfo[3], color='r')
+    ax[0].set_xticks(x_axis)
+    ax[0].set_ylim(bottom=max(0, loop-100), top=loop+100)
 
-    # # x-axis vs loop iteration
-    # ax.cla()
-    # ax.plot(plotInfo[0], plotInfo[3], color='r')
-    # ax.plot(plotKalman[0], plotInfo[3], color='b')
-    # ax.set_xticks(x_axis)
-    # ax.set_ylim(bottom=max(0, loop-100), top=loop+100)
+    # x-axis vs loop iteration
+    ax[1].title.set_text('Left - Right translation')
+    ax[1].cla()
+    ax[1].plot(plotInfo[0], plotInfo[3], color='r')
+    ax[1].plot(plotKalman[0], plotInfo[3], color='b')
+    ax[1].set_xticks(x_axis)
+    ax[1].set_ylim(bottom=max(0, loop-100), top=loop+100)
 
-    # # y-axis vs loop iteration
-    # ax.cla()
-    # ax.plot(plotInfo[3], plotInfo[1], color='r')
-    # ax.plot(plotInfo[3], plotKalman[1], color='b')
-    # ax.invert_yaxis()
-    # ax.set_xlim(left=max(0, loop-100), right=loop+100)
-    # ax.set_yticks(y_axis)
+    # y-axis vs loop iteration
+    ax[2].title.set_text('Up - Down translation')
+    ax[2].cla()
+    ax[2].plot(plotInfo[3], plotInfo[1], color='r')
+    ax[2].plot(plotInfo[3], plotKalman[1], color='b')
+    ax[2].invert_yaxis()
+    ax[2].set_xlim(left=max(0, loop-100), right=loop+100)
+    ax[2].set_yticks(y_axis)
 
     # forwardback vs loop iteration   
-    # ax.cla()
-    # ax.plot(plotInfo[3], plotInfo[2], color='r')
-    # ax.plot(plotInfo[3], plotKalman[2], color='b')
-    # ax.set_xlim(left=max(0, loop-100), right=loop+100)
-    # ax.set_yticks(y_axis)
+    ax[3].title.set_text('Forward - Backward translation')
+    ax[3].cla()
+    ax[3].plot(plotInfo[3], plotInfo[2], color='r')
+    ax[3].plot(plotInfo[3], plotKalman[2], color='b')
+    ax[3].set_xlim(left=max(0, loop-100), right=loop+100)
+    ax[3].set_yticks(y_axis)
     
     fig.canvas.draw()
 

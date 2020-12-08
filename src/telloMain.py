@@ -1,6 +1,8 @@
 from telloFunctions import *
 from trackHSV import *
 from pynput.keyboard import Key, Listener
+import sys
+import atexit
 import time
 import cv2
 import threading
@@ -15,9 +17,9 @@ listener = None # To check wether listener thread is created
 keyPressed = None # Value of pressed keys
 trackOn = False # True to track object, false otherwise
 mode = True  # True = Rotation, False = Translation
-safeQuit = False # Do not change value. Safety measures.
-plotOn = False # True to draw plots of X Y H.
+plotOn = True # True to draw plots of X Y H.
 OSDon = True # Turn on and off OSD
+webcam = True # True for webcam, false for Drone cam
 
 
 # Kalman variables, declarations
@@ -61,6 +63,7 @@ pError = [0, 0, 0] # yaw, height, distance
 
 
 # VARIABLES END # -----------------------------------------------
+
 
 # Keyboard listener
 def on_release(key):
@@ -132,7 +135,7 @@ def updateMovement():
 def CheckWhichKeyIsPressed():  
     global listener 
     if listener == None:  
-        listener = Listener(on_release=on_release, on_press=on_press)
+        listener = Listener(on_release=on_release, on_press=on_press, daemon=True)
         listener.start()
         print("CREATING LISTENER THREAD\n\n")
 
@@ -144,17 +147,21 @@ connection, drone = initializeTello()
 
 # Create objects 
 if connection:
+    print("----- Connection to drone succeeded -----")
+
+    # Drone var
+    drone.speed = S
 
     # YOLO variables
     classNames, net, whT = initYOLO()
 
     # OSD Thread
-    dataThread = threading.Thread(target=droneData, args=(droneStates,), daemon=True)
+    dataThread = threading.Thread(target=droneData, args=(droneStates,), daemon = True)
     dataThread.start()
 
     # Create plot
     if plotOn:
-        fig, ax = plt.subplots(1)
+        fig, ax = plt.subplots(ncols=2, nrows=2, constrained_layout=True, figsize=(8,8))
         mngr = plt.get_current_fig_manager()
         geom = mngr.window.geometry()
         x,y,dx,dy = geom.getRect()
@@ -167,10 +174,11 @@ if connection:
     
     #qSlider("Display")
 
-    drone.speed = S
-
     # Function that creates listener on different thread that detects a key press/release
     CheckWhichKeyIsPressed()
+    
+else:
+    print("----- Connection to drone failed -----")
 
 
 # Loop
@@ -194,8 +202,8 @@ while connection:
 
         # Tracking methods: HAAR, YOLO, HSV
         # info = findFace(img) # HAAR
-        # info = findFaceYolo(outputs, img, classNames, classNumber) # YOLO
-        info = trackHSV(img) # HSV
+        info = findFaceYolo(outputs, img, classNames, classNumber) # YOLO
+        # info = trackHSV(img) # HSV
         
 
 
@@ -251,21 +259,21 @@ while connection:
 
     # To land and end connection
     if keyPressed == 'q':
-        drone.end()
         plt.close('all')
+        cv2.destroyAllWindows()
         # print(f"VARIANCE X: {np.var(plotInfo[0])} LEN: {len(plotInfo[0])}") # Measurement variance in X
         # print(f"VARIANCE Y: {np.var(plotInfo[1])} LEN: {len(plotInfo[1])}") # Measurement variance in Y
         # print(f"VARIANCE FB: {np.var(plotInfo[2])} LEN: {len(plotInfo[2])}") # Measurement variance in Forward-Back
-        safeQuit = True
         break
     
     # To take off
-    elif keyPressed == 'f':
-        drone.takeoff()
+    #elif keyPressed == 'f':
+    #    drone.takeoff()
    
     # To land drone
     elif keyPressed == 'l':
         drone.land()
+
 
     # Enable/Disable tracking
     elif keyPressed == 't':
@@ -301,13 +309,7 @@ while connection:
 
 
 
-
-
-# Safety measure
-if not safeQuit:
-    plt.close('all')
-    drone.end() # If program ended without 'q'
-
+drone.end()
 cv2.destroyAllWindows()
 
 
