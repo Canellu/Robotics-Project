@@ -87,7 +87,7 @@ def findFace(img):
 
 def initYOLO():
     # YOLO STUFF
-    whT = 160 # A parameter for image to blob conversion
+    whT = 416 # A parameter for image to blob conversion
 
     # Import class names to list from coco.names
     classesFile = "../YOLOv3/a.names"
@@ -111,7 +111,7 @@ def findFaceYolo(outputs, img, classNames, classNumber):
 
     # Neural Network Params
     confThreshold = 0.3 # Lower value, more boxes (but worse confidence per box)
-    nmsThreshold = 0.3 # Lower value, less overlaps
+    nmsThreshold = 0.5 # Lower value, less overlaps
 
     hT, wT, _ = img.shape
     bbox = [] 
@@ -143,7 +143,6 @@ def findFaceYolo(outputs, img, classNames, classNumber):
         x, y, w, h = box[0], box[1], box[2], box[3] # Extract x, y, width, height
         area = w * h
 
-        
         if(classNames[classIndices[i]] == toTrack):
             returnIndices.append(i)
 
@@ -224,32 +223,32 @@ def trackFace(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slider
 
 
     # Rotation / Translation
-    # if mode:
-    #     # Rotation
-    #     if cx != 0:
-    #         drone.yaw_velocity = speed[3]
-    #     else:
-    #         drone.yaw_velocity = 0
-    #         drone.left_right_velocity = 0
-    #         error[0] = 0
+    if mode:
+        # Rotation
+        if cx != 0:
+            drone.yaw_velocity = speed[3]
+        else:
+            drone.yaw_velocity = 0
+            drone.left_right_velocity = 0
+            error[0] = 0
           
-    # else:
-    #     # Translation
-    #     if cx != 0:
-    #         drone.left_right_velocity = speed[0]
-    #     else:
-    #         drone.left_right_velocity = 0
-    #         drone.yaw_velocity = 0
-    #         error[0] = 0
+    else:
+        # Translation
+        if cx != 0:
+            drone.left_right_velocity = speed[0]
+        else:
+            drone.left_right_velocity = 0
+            drone.yaw_velocity = 0
+            error[0] = 0
 
-    # # Forward - Back
-    # if bh != 0:
-    #     drone.for_back_velocity = speed[1]
-    # else:
-    #     drone.for_back_velocity = 0
-    #     error[1] = 0       
+    # Forward - Back
+    if bh != 0:
+        drone.for_back_velocity = speed[1]
+    else:
+        drone.for_back_velocity = 0
+        error[1] = 0       
 
-    #  Up - down
+    # Up - down
     if cy != 0:
         drone.up_down_velocity = speed[2]
     else:
@@ -546,23 +545,23 @@ def plot(frameWidth, frameHeight, fig, ax, info, X, loop, plotInfo, plotKalman, 
     
 
     # Plotting
-
+    
 
     # PID vs Error iteration
-    ax.cla()
-    ax.plot(plotPID[0], plotInfo[3], color='b')
-    ax.plot(plotError[0], plotInfo[3], color='r')
-    ax.set_xticks(x_axis)
-    ax.set_ylim(bottom=max(0, loop-100), top=loop+100)
-
-    # # x-axis vs loop iteration
     # ax.cla()
-    # ax.plot(plotInfo[0], plotInfo[3], color='r')
-    # ax.plot(plotKalman[0], plotInfo[3], color='b')
+    # ax.plot(plotPID[0], plotInfo[3], color='b')
+    # ax.plot(plotError[0], plotInfo[3], color='r')
     # ax.set_xticks(x_axis)
     # ax.set_ylim(bottom=max(0, loop-100), top=loop+100)
 
-    # # y-axis vs loop iteration
+    # x-axis vs loop iteration
+    # ax.cla()
+    # measuredL = ax.plot(plotInfo[0], plotInfo[3], color='r')
+    # kalmanL =ax.plot(plotKalman[0], plotInfo[3], color='b')
+    # ax.set_xticks(x_axis)
+    # ax.set_ylim(bottom=max(0, loop-100), top=loop+100)
+
+    # y-axis vs loop iteration
     # ax.cla()
     # ax.plot(plotInfo[3], plotInfo[1], color='r')
     # ax.plot(plotInfo[3], plotKalman[1], color='b')
@@ -570,12 +569,17 @@ def plot(frameWidth, frameHeight, fig, ax, info, X, loop, plotInfo, plotKalman, 
     # ax.set_xlim(left=max(0, loop-100), right=loop+100)
     # ax.set_yticks(y_axis)
 
-    # forwardback vs loop iteration   
+    # # forwardback vs loop iteration   
     # ax.cla()
     # ax.plot(plotInfo[3], plotInfo[2], color='r')
     # ax.plot(plotInfo[3], plotKalman[2], color='b')
     # ax.set_xlim(left=max(0, loop-100), right=loop+100)
     # ax.set_yticks(y_axis)
+
+    ax.legend(('Measured', 'Kalman'), loc='upper right', shadow=True)
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Position')
+    ax.set_title('Position vs Kalman')
     
     fig.canvas.draw()
 

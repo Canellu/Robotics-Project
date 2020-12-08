@@ -51,9 +51,9 @@ pulse = True # For Red dot on OSD to pulse
 
 
 # PID data
-pidY = [0.5, 0, 0] # Left right
-pidX = [0.5, 0, 0] # Forward back
-pidZ = [0.42, 0.1, 0] # Up down
+pidY = [0.25, 0.02, 0.2] # Left right
+pidX = [0.5, 0, 0.2] # Forward back
+pidZ = [0.6, 0.2, 0.2] # Up down
 pidYaw = [0.4, 0.1, 0.4] # Rotate
 info = [0,0,0] # x, y, width, height
 pInfo = [0, 0, 0] # x, y, height
@@ -154,11 +154,11 @@ if connection:
 
     # Create plot
     if plotOn:
-        fig, ax = plt.subplots(1)
+        fig, ax = plt.subplots(1, figsize=(8,6))
         mngr = plt.get_current_fig_manager()
         geom = mngr.window.geometry()
         x,y,dx,dy = geom.getRect()
-        mngr.window.setGeometry(50,300,dx, dy)
+        mngr.window.setGeometry(50,50,dx, dy)
         fig.show()
 
 
@@ -194,8 +194,8 @@ while connection:
 
         # Tracking methods: HAAR, YOLO, HSV
         # info = findFace(img) # HAAR
-        # info = findFaceYolo(outputs, img, classNames, classNumber) # YOLO
-        info = trackHSV(img) # HSV
+        info = findFaceYolo(outputs, img, classNames, classNumber) # YOLO
+        # info = trackHSV(img) # HSV
         
 
 
@@ -252,7 +252,7 @@ while connection:
     # To land and end connection
     if keyPressed == 'q':
         drone.end()
-        plt.close('all')
+        # plt.close('all')
         # print(f"VARIANCE X: {np.var(plotInfo[0])} LEN: {len(plotInfo[0])}") # Measurement variance in X
         # print(f"VARIANCE Y: {np.var(plotInfo[1])} LEN: {len(plotInfo[1])}") # Measurement variance in Y
         # print(f"VARIANCE FB: {np.var(plotInfo[2])} LEN: {len(plotInfo[2])}") # Measurement variance in Forward-Back
@@ -305,7 +305,7 @@ while connection:
 
 # Safety measure
 if not safeQuit:
-    plt.close('all')
+    # plt.close('all')
     drone.end() # If program ended without 'q'
 
 cv2.destroyAllWindows()
