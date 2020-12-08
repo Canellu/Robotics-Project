@@ -53,9 +53,9 @@ pulse = True # For Red dot on OSD to pulse
 
 
 # PID data
-pidY = [0.5, 0, 0] # Left right
-pidX = [0.5, 0, 0] # Forward back
-pidZ = [0.42, 0.1, 0] # Up down
+pidY = [0.25, 0.02, 0.2] # Left right
+pidX = [0.5, 0, 0.2] # Forward back
+pidZ = [0.6, 0.2, 0.2] # Up down
 pidYaw = [0.4, 0.1, 0.4] # Rotate
 info = [0,0,0] # x, y, width, height
 pInfo = [0, 0, 0] # x, y, height
@@ -165,7 +165,7 @@ if connection:
         mngr = plt.get_current_fig_manager()
         geom = mngr.window.geometry()
         x,y,dx,dy = geom.getRect()
-        mngr.window.setGeometry(50,300,dx, dy)
+        mngr.window.setGeometry(50,50,dx, dy)
         fig.show()
 
 
@@ -261,6 +261,7 @@ while connection:
     if keyPressed == 'q':
         plt.close('all')
         cv2.destroyAllWindows()
+        drone.end()
         # print(f"VARIANCE X: {np.var(plotInfo[0])} LEN: {len(plotInfo[0])}") # Measurement variance in X
         # print(f"VARIANCE Y: {np.var(plotInfo[1])} LEN: {len(plotInfo[1])}") # Measurement variance in Y
         # print(f"VARIANCE FB: {np.var(plotInfo[2])} LEN: {len(plotInfo[2])}") # Measurement variance in Forward-Back

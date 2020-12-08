@@ -101,7 +101,7 @@ def findFaceYolo(outputs, img, classNames, classNumber):
 
     # Neural Network Params
     confThreshold = 0.3 # Lower value, more boxes (but worse confidence per box)
-    nmsThreshold = 0.3 # Lower value, less overlaps
+    nmsThreshold = 0.5 # Lower value, less overlaps
 
     hT, wT, _ = img.shape
     bbox = [] 
@@ -488,8 +488,6 @@ def plot(frameWidth, frameHeight, fig, ax, info, X, loop, plotInfo, plotKalman, 
     #pError[1] = error for/back (pixels)
     #pError[2] = error up/down (pixels)
 
-
-
     # defining axes
     x_axis = np.linspace(0, frameWidth, num=5)
     y_axis = np.linspace(frameHeight, 0, num=5)
@@ -536,9 +534,14 @@ def plot(frameWidth, frameHeight, fig, ax, info, X, loop, plotInfo, plotKalman, 
 
     # Plotting
     fig.suptitle('Measurement vs Kalman', fontsize=16)
+    
 
     # PID vs Error iteration
     ax[0].title.set_text('PID vs Error')
+    ax[0].legend(('PID', 'Kalman'), loc='upper right', shadow=True)
+    ax[0].set_xlabel('Kalman')
+    ax[0].set_ylabel('Position')
+    ax[0].set_title('Position vs Kalman')
     ax[0].cla()
     ax[0].plot(plotPID[0], plotInfo[3], color='b')
     ax[0].plot(plotError[0], plotInfo[3], color='r')
@@ -569,6 +572,9 @@ def plot(frameWidth, frameHeight, fig, ax, info, X, loop, plotInfo, plotKalman, 
     ax[3].plot(plotInfo[3], plotKalman[2], color='b')
     ax[3].set_xlim(left=max(0, loop-100), right=loop+100)
     ax[3].set_yticks(y_axis)
+    
+
+
     
     fig.canvas.draw()
 

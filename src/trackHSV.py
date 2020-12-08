@@ -46,7 +46,9 @@ def trackHSV(frame):
 
         if radius > 20:
             cv2.circle(frame, (int(x), int(y)), int(radius), (0,255,255), 2)
+            radius = int(radius * 4.5)
             return [center[0], center[1], radius]
+    
     
 
     return [0, 0, 0]
