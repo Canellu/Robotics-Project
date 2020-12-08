@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 # VARIABLES # ----------------------------------------
 
-# Control panel (ALL STATIC, DONT CHANGE)
+# Control panel
 listener = None # To check wether listener thread is created
 keyPressed = None # Value of pressed keys
 trackOn = False # True to track object, false otherwise
@@ -20,15 +20,6 @@ mode = True  # True = Rotation, False = Translation
 plotOn = True # True to draw plots of X Y H.
 OSDon = True # Turn on and off OSD
 webcam = True # True for webcam, false for Drone cam
-
-
-# Kalman variables, declarations
-Q = np.array([[1.5, 0, 0], [0, 5, 0], [0, 0, 1.4]]) # Process noise
-R = np.array([[80, 0, 0], [0, 200, 0],[0, 0, 90]]) # Measurement noise
-X = np.array([480, 360, 180])
-XInit = np.array([480, 360, 180])
-P = np.array([[15, 0, 0],[0, 35, 0], [0, 0, 15]])
-
 
 # Plotting variables, parameters
 countArray = []
@@ -39,18 +30,23 @@ plotError = [[],[],[]] # Do not change value
 loopCount = 0
 updateCycle = 3
 
-
-# Drone data
-droneStates = []
-S = 50
-classNumber = 0
-
 # FPS
 counter = 0
 FPS = 0
 startTime = time.time()
 pulse = True # For Red dot on OSD to pulse
 
+# Drone data
+droneStates = []
+S = 50
+classNumber = 0
+
+# Kalman variables, declarations
+Q = np.array([[1.5, 0, 0], [0, 5, 0], [0, 0, 1.4]]) # Process noise
+R = np.array([[80, 0, 0], [0, 200, 0],[0, 0, 90]]) # Measurement noise
+X = np.array([480, 360, 180])
+XInit = np.array([480, 360, 180])
+P = np.array([[15, 0, 0],[0, 35, 0], [0, 0, 15]])
 
 # PID data
 pidY = [0.25, 0.02, 0.2] # Left right
@@ -102,6 +98,7 @@ def on_release(key):
         elif key == Key.down:
             drone.for_back_velocity = 0
 
+
 def on_press(key):
     global keyPressed
 
@@ -123,14 +120,7 @@ def on_press(key):
             drone.for_back_velocity = drone.speed
         elif key == Key.down:
             drone.for_back_velocity = -drone.speed
-        
-def updateMovement():
-    # Update movement
-    if drone.send_rc_control:
-        drone.send_rc_control(drone.left_right_velocity,
-                              drone.for_back_velocity,
-                              drone.up_down_velocity,
-                              drone.yaw_velocity)
+
 
 def CheckWhichKeyIsPressed():  
     global listener 

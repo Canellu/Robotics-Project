@@ -614,4 +614,17 @@ def kalman(info, XOld, POld, Q, R, Xinit):
     return XNew, PNew
 
 
+def updateMovement():
+    # Update movement
+    if drone.send_rc_control:
+        drone.send_rc_control(drone.left_right_velocity,
+                              drone.for_back_velocity,
+                              drone.up_down_velocity,
+                              drone.yaw_velocity)
 
+
+    if drone.send_rc_control:
+        drone.send_rc_control(drone.left_right_velocity,
+                              drone.for_back_velocity,
+                              drone.up_down_velocity,
+                              drone.yaw_velocity)
