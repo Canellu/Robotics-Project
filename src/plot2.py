@@ -11,10 +11,21 @@ def update_plot_data():
 
     global cycle
     global plotInfo
+    global plotKalman
 
     global line1
     global line2
     global line3
+
+    global line1K
+    global line2K
+    global line3K
+
+    global X
+    global P
+    global Q
+    global R
+    global XInit
 
     ret, frame = cap.read()
     # My webcam yields frames in BGR format
@@ -22,6 +33,7 @@ def update_plot_data():
     outputs = progYOLO(frame, net, whT)
     info = findObjectYOLO(outputs, frame, classNames, 0) # YOLO
 
+    X, P = kalman(info, X, P, Q, R, XInit)
 
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     img = QtGui.QImage(frame, frame.shape[1], frame.shape[0], QtGui.QImage.Format_RGB888)
@@ -30,18 +42,24 @@ def update_plot_data():
 
     if info[0] == 0: # x
         plotInfo[0].append(frame.shape[1]//2)
+        plotKalman[0].append(frame.shape[1]//2)
     else:
         plotInfo[0].append(info[0])
+        plotKalman[0].append(X[0])
     
     if info[1] == 0: # y
         plotInfo[1].append(frame.shape[0]//2)
+        plotKalman[1].append(frame.shape[0]//2)
     else:
         plotInfo[1].append(info[1])
+        plotKalman[0].append(X[1])
     
     if info[2] == 0: # h
         plotInfo[2].append(200)
+        plotKalman[2].append(200)
     else:
         plotInfo[2].append(info[2])
+        plotKalman[0].append(X[2])
 
     cycle.append(cycle[-1] + 1)  # Add a new value 1 higher than the last.
 
@@ -53,12 +71,22 @@ def update_plot_data():
     if len(cycle) > 100:
         for i in range(3):
             plotInfo[i].pop(0) 
+            plotKalman[i].pop(0)
+
         cycle.pop(0)
 
 
     line1.setData(plotInfo[0], cycle)  # Update the data.
-    line2.setData(cycle, plotInfo[1])  # Update the data.
-    line3.setData(cycle, plotInfo[2])  # Update the data.
+    line2.setData(cycle, plotInfo[1])
+    line3.setData(cycle, plotInfo[2])
+
+    line1K.setData(plotKalman[0], cycle)
+    line2K.setData(cycle, plotKalman[1])
+    line3K.setData(cycle, plotKalman[2])
+
+
+def readQVal(value):
+    print(f'Q val: {value}')
 
 
 classNames, net, whT = initYOLO()
@@ -68,6 +96,11 @@ cap = cv2.VideoCapture(0)
 app = QApplication([])
 win = QMainWindow()
 
+Q = np.array([[1.5, 0, 0], [0, 5, 0], [0, 0, 1.4]]) # Process noise
+R = np.array([[80, 0, 0], [0, 200, 0],[0, 0, 90]]) # Measurement noise
+X = np.array([480, 360, 180])
+XInit = np.array([480, 360, 180])
+P = np.array([[15, 0, 0],[0, 35, 0], [0, 0, 15]])
 
 # Data
 
@@ -75,6 +108,7 @@ win = QMainWindow()
 cycle = [0]
 
 plotInfo = [[],[],[]] # [x,y,h,loopCount] Do not change value
+plotKalman = [[],[],[]] # Do not change value
 
 # plotInfo[0] = [randint(0,100) for _ in range(10)]
 # plotInfo[1] = [randint(0,100) for _ in range(10)]
@@ -84,8 +118,15 @@ plotInfo[0].append(320)
 plotInfo[1].append(240)
 plotInfo[2].append(200)
 
+plotKalman[0].append(320)
+plotKalman[1].append(240)
+plotKalman[2].append(200)
+
 
 # Creating Plot
+
+penInfo = pg.mkPen(color=(255, 0, 0), style=QtCore.Qt.DashLine)
+penKalman = pg.mkPen(color=(0, 0, 255))
 
 
 # Left/Right
@@ -97,8 +138,8 @@ plot1Widget.addLegend()
 plot1Widget.setXRange(0, 640)
 plot1Widget.setYRange(max(0, cycle[0]-100), (cycle[0]+100))
 
-pen1 = pg.mkPen(color=(255, 0, 0), style=QtCore.Qt.DashLine)
-line1 = plot1Widget.plot(cycle, plotInfo[0], name='temp', pen=pen1)
+line1 = plot1Widget.plot(cycle, plotInfo[0], name='measured', pen=penInfo)
+line1K = plot1Widget.plot(cycle, plotKalman[0], name='kalman', pen=penKalman)
 
 
 
@@ -111,10 +152,10 @@ plot2Widget.addLegend()
 plot2Widget.setXRange(max(0, cycle[0]-100), (cycle[0]+100))
 plot2Widget.setYRange(0, 480)
 
-
-pen2 = pg.mkPen(color=(255, 0, 0), style=QtCore.Qt.DashLine)
-line2 = plot2Widget.plot(plotInfo[1], cycle, name='temp', pen=pen2)
+line2 = plot2Widget.plot(plotInfo[1], cycle, name='measured', pen=penInfo)
+line2K = plot2Widget.plot(plotKalman[1], cycle, name='kalman', pen=penKalman)
 line2.getViewBox().invertY(True)
+line2K.getViewBox().invertY(True)
 
 
 # Forward/Back
@@ -124,11 +165,10 @@ plot3Widget.setLabel('left', "<span style=\"color:red;font-size:20px\">Pixels</s
 plot3Widget.setLabel('bottom', "<span style=\"color:red;font-size:20px\">Cycle</span>")
 plot3Widget.addLegend()
 plot3Widget.setXRange(max(0, cycle[0]-100), (cycle[0]+100))
-plot3Widget.setYRange(0, 480)
+plot3Widget.setYRange(0, 400)
 
-
-pen3 = pg.mkPen(color=(255, 0, 0), style=QtCore.Qt.DashLine)
-line3 = plot3Widget.plot(cycle, plotInfo[2], name='temp', pen=pen3)
+line3 = plot3Widget.plot(cycle, plotInfo[2], name='measured', pen=penInfo)
+line3K = plot3Widget.plot(cycle, plotKalman[2], name='kalman', pen=penKalman)
 
 plot1Widget.setBackground('w')
 plot2Widget.setBackground('w')
@@ -161,6 +201,12 @@ timer.start()
 central_widget = QWidget()
 
 layout = QVBoxLayout(central_widget)
+
+qSlider = QSlider(QtCore.Qt.Horizontal)
+qSlider.valueChanged[int].connect(readQVal)
+qSlider.setMaximum(200)
+qSlider.setSliderPosition(100)
+layout.addWidget(qSlider)
 
 groupBox1 = QGroupBox()
 groupBox2 = QGroupBox()
