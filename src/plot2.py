@@ -22,19 +22,32 @@ def update_plot_data():
     outputs = progYOLO(frame, net, whT)
     info = findObjectYOLO(outputs, frame, classNames, 0) # YOLO
 
+
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     img = QtGui.QImage(frame, frame.shape[1], frame.shape[0], QtGui.QImage.Format_RGB888)
     pix = QtGui.QPixmap.fromImage(img)
     camFrame.setPixmap(pix)
 
+    if info[0] == 0: # x
+        plotInfo[0].append(frame.shape[1]//2)
+    else:
+        plotInfo[0].append(info[0])
+    
+    if info[1] == 0: # y
+        plotInfo[1].append(frame.shape[0]//2)
+    else:
+        plotInfo[1].append(info[1])
+    
+    if info[2] == 0: # h
+        plotInfo[2].append(200)
+    else:
+        plotInfo[2].append(info[2])
 
-    for i in range(3):
-        plotInfo[i].append(info[i])
-
+    cycle.append(cycle[-1] + 1)  # Add a new value 1 higher than the last.
 
     if len(cycle) >= 100:
-        line1.getViewBox().enableAutoRange(axis='x', enable=True)
-        line2.getViewBox().enableAutoRange(axis='y', enable=True)
+        line1.getViewBox().enableAutoRange(axis='y', enable=True)
+        line2.getViewBox().enableAutoRange(axis='x', enable=True)
         line3.getViewBox().enableAutoRange(axis='x', enable=True)
 
     if len(cycle) > 100:
@@ -42,11 +55,9 @@ def update_plot_data():
             plotInfo[i].pop(0) 
         cycle.pop(0)
 
-     # Remove the first y element.
-    cycle.append(cycle[-1] + 1)  # Add a new value 1 higher than the last.
 
     line1.setData(plotInfo[0], cycle)  # Update the data.
-    line2.setData(plotInfo[1], cycle)  # Update the data.
+    line2.setData(cycle, plotInfo[1])  # Update the data.
     line3.setData(cycle, plotInfo[2])  # Update the data.
 
 
@@ -56,7 +67,6 @@ cap = cv2.VideoCapture(0)
 
 app = QApplication([])
 win = QMainWindow()
-
 
 
 # Data
@@ -70,9 +80,9 @@ plotInfo = [[],[],[]] # [x,y,h,loopCount] Do not change value
 # plotInfo[1] = [randint(0,100) for _ in range(10)]
 # plotInfo[2] = [randint(0,100) for _ in range(10)]
 
-plotInfo[0].append(50)
-plotInfo[1].append(50)
-plotInfo[2].append(50)
+plotInfo[0].append(320)
+plotInfo[1].append(240)
+plotInfo[2].append(200)
 
 
 # Creating Plot
@@ -84,12 +94,11 @@ plot1Widget.setTitle("Left/Right", color='r', size='20pt')
 plot1Widget.setLabel('left', "<span style=\"color:red;font-size:20px\">Pixels</span>")
 plot1Widget.setLabel('bottom', "<span style=\"color:red;font-size:20px\">Cycle</span>")
 plot1Widget.addLegend()
-plot1Widget.setXRange(max(0, cycle[0]-100), (cycle[0]+100))
-plot1Widget.setYRange(0, 720)
+plot1Widget.setXRange(0, 640)
+plot1Widget.setYRange(max(0, cycle[0]-100), (cycle[0]+100))
 
 pen1 = pg.mkPen(color=(255, 0, 0), style=QtCore.Qt.DashLine)
 line1 = plot1Widget.plot(cycle, plotInfo[0], name='temp', pen=pen1)
-line1.getViewBox().invertY(True)
 
 
 
@@ -99,12 +108,13 @@ plot2Widget.setTitle("Up/Down", color='r', size='20pt')
 plot2Widget.setLabel('left', "<span style=\"color:red;font-size:20px\">Cycle</span>")
 plot2Widget.setLabel('bottom', "<span style=\"color:red;font-size:20px\">Pixels</span>")
 plot2Widget.addLegend()
-plot1Widget.setXRange(0, 960)
-plot2Widget.setYRange(max(0, cycle[0]-100), (cycle[0]+100))
+plot2Widget.setXRange(max(0, cycle[0]-100), (cycle[0]+100))
+plot2Widget.setYRange(0, 480)
 
 
 pen2 = pg.mkPen(color=(255, 0, 0), style=QtCore.Qt.DashLine)
 line2 = plot2Widget.plot(plotInfo[1], cycle, name='temp', pen=pen2)
+line2.getViewBox().invertY(True)
 
 
 # Forward/Back
@@ -114,7 +124,8 @@ plot3Widget.setLabel('left', "<span style=\"color:red;font-size:20px\">Pixels</s
 plot3Widget.setLabel('bottom', "<span style=\"color:red;font-size:20px\">Cycle</span>")
 plot3Widget.addLegend()
 plot3Widget.setXRange(max(0, cycle[0]-100), (cycle[0]+100))
-plot1Widget.setYRange(0, 720)
+plot3Widget.setYRange(0, 480)
+
 
 pen3 = pg.mkPen(color=(255, 0, 0), style=QtCore.Qt.DashLine)
 line3 = plot3Widget.plot(cycle, plotInfo[2], name='temp', pen=pen3)
