@@ -24,15 +24,12 @@ def update_plot_data():
 
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     img = QtGui.QImage(frame, frame.shape[1], frame.shape[0], QtGui.QImage.Format_RGB888)
-
-
-    for i in range(3):
-        plotInfo[i].append(info[i])
-
     pix = QtGui.QPixmap.fromImage(img)
     camFrame.setPixmap(pix)
 
 
+    for i in range(3):
+        plotInfo[i].append(info[i])
 
 
     if len(cycle) >= 100:
@@ -81,11 +78,12 @@ plotInfo[2].append(50)
 # Creating Plot
 
 plot1Widget = pg.PlotWidget()
-plot1Widget.setTitle("Up/Down", color='r', size='20pt')
+plot1Widget.setTitle("Left/Right", color='r', size='20pt')
 plot1Widget.setLabel('left', "<span style=\"color:red;font-size:20px\">Pixels</span>")
 plot1Widget.setLabel('bottom', "<span style=\"color:red;font-size:20px\">Cycle</span>")
 plot1Widget.addLegend()
 plot1Widget.setXRange(max(0, cycle[0]-100), (cycle[0]+100))
+plot1Widget.setYRange(0, 720)
 
 pen1 = pg.mkPen(color=(255, 0, 0), style=QtCore.Qt.DashLine)
 line1 = plot1Widget.plot(cycle, plotInfo[0], name='temp', pen=pen1)
@@ -95,11 +93,13 @@ line1.getViewBox().invertY(True)
 
 
 plot2Widget = pg.PlotWidget()
-plot2Widget.setTitle("Left/Right", color='r', size='20pt')
+plot2Widget.setTitle("Up/Down", color='r', size='20pt')
 plot2Widget.setLabel('left', "<span style=\"color:red;font-size:20px\">Cycle</span>")
 plot2Widget.setLabel('bottom', "<span style=\"color:red;font-size:20px\">Pixels</span>")
 plot2Widget.addLegend()
+plot1Widget.setXRange(0, 960)
 plot2Widget.setYRange(max(0, cycle[0]-100), (cycle[0]+100))
+
 
 pen2 = pg.mkPen(color=(255, 0, 0), style=QtCore.Qt.DashLine)
 line2 = plot2Widget.plot(plotInfo[1], cycle, name='temp', pen=pen2)
@@ -111,6 +111,7 @@ plot3Widget.setLabel('left', "<span style=\"color:red;font-size:20px\">Pixels</s
 plot3Widget.setLabel('bottom', "<span style=\"color:red;font-size:20px\">Cycle</span>")
 plot3Widget.addLegend()
 plot3Widget.setXRange(max(0, cycle[0]-100), (cycle[0]+100))
+plot1Widget.setYRange(0, 720)
 
 pen3 = pg.mkPen(color=(255, 0, 0), style=QtCore.Qt.DashLine)
 line3 = plot3Widget.plot(cycle, plotInfo[2], name='temp', pen=pen3)
@@ -152,12 +153,12 @@ groupBox2 = QGroupBox()
 
 hBoxTop = QHBoxLayout()
 hBoxTop.addWidget(camFrame)
-hBoxTop.addWidget(plot1Widget)
+hBoxTop.addWidget(plot2Widget)
 
 groupBox1.setLayout(hBoxTop)
 
 hBoxBot = QHBoxLayout()
-hBoxBot.addWidget(plot2Widget)
+hBoxBot.addWidget(plot1Widget)
 hBoxBot.addWidget(plot3Widget)
 
 groupBox2.setLayout(hBoxBot)
