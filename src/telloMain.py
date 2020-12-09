@@ -1,14 +1,10 @@
 from telloFunctions import *
-from trackHSV import *
 from pynput.keyboard import Key, Listener
-import sys
-import atexit
 import time
 import cv2
 import threading
 import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
+
 
 # VARIABLES # ----------------------------------------
 
@@ -17,9 +13,8 @@ listener = None # To check wether listener thread is created
 keyPressed = None # Value of pressed keys
 trackOn = False # True to track object, false otherwise
 mode = True  # True = Rotation, False = Translation
-plotOn = True # True to draw plots of X Y H.
 OSDon = True # Turn on and off OSD
-webcam = True # True for webcam, false for Drone cam
+
 
 # Plotting variables, parameters
 countArray = []
@@ -40,6 +35,7 @@ pulse = True # For Red dot on OSD to pulse
 droneStates = []
 S = 50
 classNumber = 0
+trackMethod = 0
 
 # Kalman variables, declarations
 Q = np.array([[1.5, 0, 0], [0, 5, 0], [0, 0, 1.4]]) # Process noise
@@ -69,6 +65,8 @@ def on_release(key):
         if key.char == 'q':
             keyPressed = key.char
         elif key.char == 'c':
+            keyPressed = key.char
+        elif key.char == 'b':
             keyPressed = key.char
         elif key.char == '1':
             keyPressed = key.char
@@ -149,14 +147,7 @@ if connection:
     dataThread = threading.Thread(target=droneData, args=(droneStates,), daemon = True)
     dataThread.start()
 
-    # Create plot
-    if plotOn:
-        fig, ax = plt.subplots(ncols=2, nrows=2, constrained_layout=True, figsize=(8,8))
-        mngr = plt.get_current_fig_manager()
-        geom = mngr.window.geometry()
-        x,y,dx,dy = geom.getRect()
-        mngr.window.setGeometry(50,50,dx, dy)
-        fig.show()
+
 
 
     # Create Distance slider
@@ -181,19 +172,19 @@ while connection:
     #Check wether to track object or not
     if trackOn:
 
-        blob = cv2.dnn.blobFromImage(img, 1 / 255, (whT, whT), [0, 0, 0], 1, crop=False) #Convert Image to a format the network can take (blobs)
-        net.setInput(blob) #Input the image to the network
-        layerNames = net.getLayerNames() #Names of all layers in network (relu, conv etc...)
-        outputNames = [(layerNames[i[0] - 1]) for i in net.getUnconnectedOutLayers()] #Find names of output layers (3 layers)
-        outputs = net.forward(outputNames)# Returns outputs as numpy.2darray from the layernames forwarded.
-                                        # (rows , columns) = (boxnumber , ( 0-4 = cx,cy,w,h, score of how 
-                                        # likely the box contain an object and how accurate the boundary 
-                                        # box is, rest is probability per classes) )
+        
 
         # Tracking methods: HAAR, YOLO, HSV
-        # info = findFace(img) # HAAR
-        info = findFaceYolo(outputs, img, classNames, classNumber) # YOLO
-        # info = trackHSV(img) # HSV
+
+        if trackMethod == 0:
+            outputs = progYOLO(img, net, whT)
+            info = findObjectYOLO(outputs, img, classNames, classNumber) # YOLO
+
+        elif trackMethod == 1:
+            info = findObjectHaar(img) # HAAR
+
+        else:
+            info = findObjectHSV(img) # HSV
         
 
 
@@ -202,23 +193,18 @@ while connection:
         XInit[2] = 180 - (distance-50)*2 # Reset init values based on slider
 
         # Kalman
-        # qVal = readSlider('Q Value', 'Display') # For testing purposes
-        # Q = np.array([[(qVal/50),0,0],[0,(qVal/50),0], [0,0,(qVal/50)]])
+       
         X, P = kalman(info, X, P, Q, R, XInit)
         
         # Control drone movement to track object
-        pInfo, pError, infoPID = trackFace(drone, X, pInfo, frameWidth, frameHeight, pidY, pidX, pidZ, pidYaw, pError, distance, img, mode)
+        pInfo, pError, infoPID = trackObject(drone, X, pInfo, frameWidth, frameHeight, pidY, pidX, pidZ, pidYaw, pError, distance, img, mode)
 
 
-         # Plotting center coordinates
-        if plotOn:
-            if (loopCount % updateCycle) == 0:
-                plotInfo, plotKalman = plot(frameWidth, frameHeight, fig, ax, info, X, loopCount, plotInfo, plotKalman, infoPID, pError, plotPID, plotError)
-            loopCount += 1
+       
 
     else:
 
-        updateMovement()
+        updateMovement(drone)
     
 
     
@@ -239,7 +225,7 @@ while connection:
         cv2.putText(img, 'FPS:', (166,650), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,255), 1)
         cv2.putText(img, str(FPS), (228,650), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,255), 2)
         
-        drawOSD(droneStates, img, pulse, mode, trackOn, classNames, classNumber)
+        drawOSD(droneStates, img, pulse, mode, trackOn, classNames, classNumber, trackMethod)
 
     # Show frames on window for 1ms
     cv2.imshow('Display', img)
@@ -249,17 +235,14 @@ while connection:
 
     # To land and end connection
     if keyPressed == 'q':
-        plt.close('all')
         cv2.destroyAllWindows()
         drone.end()
-        # print(f"VARIANCE X: {np.var(plotInfo[0])} LEN: {len(plotInfo[0])}") # Measurement variance in X
-        # print(f"VARIANCE Y: {np.var(plotInfo[1])} LEN: {len(plotInfo[1])}") # Measurement variance in Y
-        # print(f"VARIANCE FB: {np.var(plotInfo[2])} LEN: {len(plotInfo[2])}") # Measurement variance in Forward-Back
+        
         break
     
     # To take off
-    #elif keyPressed == 'f':
-    #    drone.takeoff()
+    elif keyPressed == 'f':
+       drone.takeoff()
    
     # To land drone
     elif keyPressed == 'l':
@@ -271,14 +254,7 @@ while connection:
         trackOn = True
     elif keyPressed == 'm':
         trackOn = False
-        drone.left_right_velocity = 0
-        drone.for_back_velocity = 0
-        drone.up_down_velocity = 0
-        drone.yaw_velocity = 0
-        drone.send_rc_control(drone.left_right_velocity,
-                              drone.for_back_velocity,
-                              drone.up_down_velocity,
-                              drone.yaw_velocity)
+        updateMovement(drone, resetMove=True)
 
     # Change track mode
     elif keyPressed == '1': # Rotation     
@@ -296,11 +272,15 @@ while connection:
         else:
             classNumber += 1
 
+    elif keyPressed == 'b':
+        if trackMethod == 2:
+            trackMethod = 0
+        else:
+            trackMethod += 1
+
     keyPressed = None
 
 
 
 drone.end()
 cv2.destroyAllWindows()
-
-

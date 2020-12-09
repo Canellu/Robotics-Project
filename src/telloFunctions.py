@@ -1,12 +1,10 @@
 from djitellopy import Tello
-from matplotlib.animation import FuncAnimation
 import cv2
 import socket
 import numpy as np
 import time
 import datetime
-import psutil
-import matplotlib.pyplot as plt
+import imutils
 
 
 def rescale_frame(frame, percent=75):
@@ -43,10 +41,10 @@ def telloGetFrame(drone):
     return telloFrame
 
 
-def findFace(img):
+def findObjectHaar(img):
 
     # prediction
-    faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+    faceCascade = cv2.CascadeClassifier('../Haar/haarcascade_frontalface_default.xml')
     imgGray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     faces = faceCascade.detectMultiScale(imgGray, 1.2,4)
 
@@ -80,14 +78,14 @@ def initYOLO():
     whT = 416 # A parameter for image to blob conversion
 
     # Import class names to list from coco.names
-    classesFile = "../YOLOv3/a.names"
+    classesFile = "../YOLOv3/coco.names"
     classNames = []
     with open(classesFile, 'rt') as f:
         classNames = f.read().rstrip('\n').split('\n')
 
     # Set up model and network
-    modelConfig = "../YOLOv3/a.cfg"
-    modelWeights = "../YOLOv3/a.weights" 
+    modelConfig = "../YOLOv3/yolov3-tiny.cfg"
+    modelWeights = "../YOLOv3/yolov3-tiny.weights" 
     net = cv2.dnn.readNetFromDarknet(modelConfig, modelWeights)
     net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
     net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
@@ -95,7 +93,20 @@ def initYOLO():
     return classNames, net, whT
 
 
-def findFaceYolo(outputs, img, classNames, classNumber):
+def progYOLO(img, net, whT):
+
+    blob = cv2.dnn.blobFromImage(img, 1 / 255, (whT, whT), [0, 0, 0], 1, crop=False) #Convert Image to a format the network can take (blobs)
+    net.setInput(blob) #Input the image to the network
+    layerNames = net.getLayerNames() #Names of all layers in network (relu, conv etc...)
+    outputNames = [(layerNames[i[0] - 1]) for i in net.getUnconnectedOutLayers()] #Find names of output layers (3 layers)
+    outputs = net.forward(outputNames)# Returns outputs as numpy.2darray from the layernames forwarded.
+                                    # (rows , columns) = (boxnumber , ( 0-4 = cx,cy,w,h, score of how 
+                                    # likely the box contain an object and how accurate the boundary 
+                                    # box is, rest is probability per classes) )
+    return outputs
+
+
+def findObjectYOLO(outputs, img, classNames, classNumber):
 
     toTrack = classNames[classNumber]
 
@@ -158,7 +169,49 @@ def findFaceYolo(outputs, img, classNames, classNumber):
         return ([0,0,0])
 
 
-def trackFace(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, sliderVal, frame, mode):
+def findObjectHSV(img):
+
+    #define the lower and upper boundaries of the "green"
+    # ball in the HSV color space, then initialize the
+    # list of tracked points
+    lowerHSV = (19,63,114)
+    upperHSV = (60,179,255)
+
+    tomatoMin = (25,79,81)
+    tomatoMax = (37,255,255)
+
+    tennisMin = (26, 70, 84)
+    tennisMax = (35, 225, 236)
+
+    center = (0,0)
+    radius = 0
+    
+    blurred = cv2.GaussianBlur(img, (11, 11), 0)
+    hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(hsv, tennisMin, tennisMax)
+    mask = cv2.erode(mask, None, iterations=2)
+    mask = cv2.dilate(mask, None, iterations=2)
+
+    contours = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours = imutils.grab_contours(contours)
+    
+    if len(contours) > 0:
+        c = max(contours, key=cv2.contourArea)
+        ((x,y), radius) = cv2.minEnclosingCircle(c)
+        M = cv2.moments(c)
+        center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+
+        if radius > 20:
+            cv2.circle(img, (int(x), int(y)), int(radius), (0,255,255), 2)
+            radius = int(radius * 4.5)
+            return [center[0], center[1], radius]
+    
+    
+
+    return [0, 0, 0]
+
+
+def trackObject(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, sliderVal, frame, mode):
 
     # mode default (True): True = Rotation, False = Translation
 
@@ -250,11 +303,7 @@ def trackFace(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slider
 
 
     # Update movement
-    if drone.send_rc_control:
-        drone.send_rc_control(drone.left_right_velocity,
-                              drone.for_back_velocity,
-                              drone.up_down_velocity,
-                              drone.yaw_velocity)
+    updateMovement(drone)
 
 
     
@@ -265,6 +314,7 @@ def trackFace(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slider
         plotPID = [speed[0], speed[1], speed[2]]
 
     return pInfo, error, plotPID
+
 
 def droneData(droneStates):
 
@@ -283,8 +333,7 @@ def droneData(droneStates):
             break
 
 
-        
-def drawOSD(droneStates, frame, pulse, mode, trackOn, classNames, classNumber):
+def drawOSD(droneStates, frame, pulse, mode, trackOn, classNames, classNumber, trackMethod):
     # pitch:0;roll:0;yaw:0;vgx:0;vgy:0;vgz:0;templ:82;temph:85;tof:48;h:0;bat:20;baro:163.98;time:0;agx:6.00;agy:-12.00;agz:-1003.00;  
     
     states = droneStates[len(droneStates)-1].split(";")
@@ -372,7 +421,12 @@ def drawOSD(droneStates, frame, pulse, mode, trackOn, classNames, classNumber):
     # MODE
     cv2.putText(frame, 'Mode:', (954,650), cv2.FONT_HERSHEY_DUPLEX, 0.7, (255,255,255), 1)
     if trackOn:
-        cv2.putText(frame, (classNames[classNumber]) , (522, h-50), cv2.FONT_HERSHEY_DUPLEX, 1, (255,255,255), 1)
+        if trackMethod == 0:
+            cv2.putText(frame, (classNames[classNumber]) , (532, h-50), cv2.FONT_HERSHEY_DUPLEX, 1, (255,255,255), 1)
+        elif trackMethod ==1:
+            cv2.putText(frame, 'Haar' , (552, h-50), cv2.FONT_HERSHEY_DUPLEX, 1, (255,255,255), 1)
+        else:
+            cv2.putText(frame, 'HSV' , (560, h-50), cv2.FONT_HERSHEY_DUPLEX, 1, (255,255,255), 1)
         if mode:
             cv2.putText(frame, 'rotation', (930,684), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,255), 1)
         else:
@@ -438,8 +492,6 @@ def drawOSD(droneStates, frame, pulse, mode, trackOn, classNames, classNumber):
     placeIcon(frame, '../images/temperature.png', (30,634), 0.5)
     cv2.putText(frame, f'{avgTemp}C', (50,640), cv2.FONT_HERSHEY_DUPLEX, 0.6, (255,255,255), 1)
     
-
-
 # Call before main-loop to create the slider (starts from 0 to maxVal)
 # @Parameter is the window to place the slider on.
 def distanceSlider(frame):
@@ -452,134 +504,12 @@ def distanceSlider(frame):
     sliderWindow = cv2.namedWindow(frame)
     cv2.createTrackbar("Distance", frame, startVal, maxVal, nothing)
 
-def qSlider(frame):
-    maxVal = 200
-    startVal = 100
-
-    def nothing(var):
-        pass
-    sliderWindow = cv2.namedWindow(frame)
-    cv2.createTrackbar("Q Value", frame, startVal, maxVal, nothing)
-
-
 # Call inside loop to read slider
 # @name = name of trackbar
 # @frame = the window trackbar resides in
 def readSlider(name, frame):
     return cv2.getTrackbarPos(name, frame)    
 
-
-def plot(frameWidth, frameHeight, fig, ax, info, X, loop, plotInfo, plotKalman, infoPID, pError, plotPID, plotError):
-
-    #plotInfo[0] = x
-    #plotInfo[1] = y
-    #plotInfo[2] = h
-    #plotInfo[3] = loop
-
-    #plotKalman[0] = x
-    #plotKalman[1] = y
-    #plotKalman[2] = h
-
-    #plotPID[0] = speed left/right or yaw
-    #plotPID[1] = speed for/back
-    #plotPID[2] = speed up/down
-
-    #pError[0] = error left/right or yaw (pixels)
-    #pError[1] = error for/back (pixels)
-    #pError[2] = error up/down (pixels)
-
-    # defining axes
-    x_axis = np.linspace(0, frameWidth, num=5)
-    y_axis = np.linspace(frameHeight, 0, num=5)
-
-    # limiting to 100 points in array
-    if len(plotInfo[3]) > 100:
-        for i in range(3):
-            plotInfo[i].pop(0)
-            plotKalman[i].pop(0)
-            plotPID[i].pop(0)
-            plotError[i].pop(0)
-
-        plotInfo[3].pop(0)
-        
-
-    # appending new values
-    if info[0] == 0: # x
-        plotInfo[0].append(frameWidth//2)
-        plotKalman[0].append(frameWidth//2)
-    else:
-        plotInfo[0].append(info[0])
-        plotKalman[0].append(X[0])
-    
-    if info[1] == 0: # y
-        plotInfo[1].append(frameHeight//2)
-        plotKalman[1].append(frameHeight//2)
-    else:
-        plotInfo[1].append(info[1])
-        plotKalman[1].append(X[1])
-
-    if info[2] == 0: # h
-        plotInfo[2].append(200)
-        plotKalman[2].append(200)
-    else:
-        plotInfo[2].append(info[2])
-        plotKalman[2].append(X[2])
-
-    plotInfo[3].append(loop)
-
-    for i in range(3):
-        plotPID[i].append(infoPID[i])
-        plotError[i].append(int(pError[i]))
-    
-
-    # Plotting
-    fig.suptitle('Measurement vs Kalman', fontsize=16)
-    
-
-    # PID vs Error iteration
-    ax[0].title.set_text('PID vs Error')
-    ax[0].legend(('PID', 'Kalman'), loc='upper right', shadow=True)
-    ax[0].set_xlabel('Kalman')
-    ax[0].set_ylabel('Position')
-    ax[0].set_title('Position vs Kalman')
-    ax[0].cla()
-    ax[0].plot(plotPID[0], plotInfo[3], color='b')
-    ax[0].plot(plotError[0], plotInfo[3], color='r')
-    ax[0].set_xticks(x_axis)
-    ax[0].set_ylim(bottom=max(0, loop-100), top=loop+100)
-
-    # x-axis vs loop iteration
-    ax[1].title.set_text('Left - Right translation')
-    ax[1].cla()
-    ax[1].plot(plotInfo[0], plotInfo[3], color='r')
-    ax[1].plot(plotKalman[0], plotInfo[3], color='b')
-    ax[1].set_xticks(x_axis)
-    ax[1].set_ylim(bottom=max(0, loop-100), top=loop+100)
-
-    # y-axis vs loop iteration
-    ax[2].title.set_text('Up - Down translation')
-    ax[2].cla()
-    ax[2].plot(plotInfo[3], plotInfo[1], color='r')
-    ax[2].plot(plotInfo[3], plotKalman[1], color='b')
-    ax[2].invert_yaxis()
-    ax[2].set_xlim(left=max(0, loop-100), right=loop+100)
-    ax[2].set_yticks(y_axis)
-
-    # forwardback vs loop iteration   
-    ax[3].title.set_text('Forward - Backward translation')
-    ax[3].cla()
-    ax[3].plot(plotInfo[3], plotInfo[2], color='r')
-    ax[3].plot(plotInfo[3], plotKalman[2], color='b')
-    ax[3].set_xlim(left=max(0, loop-100), right=loop+100)
-    ax[3].set_yticks(y_axis)
-    
-
-
-    
-    fig.canvas.draw()
-
-    # Return updated x,y,t array
-    return plotInfo, plotKalman
 
 def kalman(info, XOld, POld, Q, R, Xinit):
 
@@ -614,15 +544,15 @@ def kalman(info, XOld, POld, Q, R, Xinit):
     return XNew, PNew
 
 
-def updateMovement():
+def updateMovement(drone, resetMove=False):
+    
+    if resetMove:
+        drone.left_right_velocity = 0
+        drone.for_back_velocity = 0
+        drone.up_down_velocity = 0
+        drone.yaw_velocity = 0
+
     # Update movement
-    if drone.send_rc_control:
-        drone.send_rc_control(drone.left_right_velocity,
-                              drone.for_back_velocity,
-                              drone.up_down_velocity,
-                              drone.yaw_velocity)
-
-
     if drone.send_rc_control:
         drone.send_rc_control(drone.left_right_velocity,
                               drone.for_back_velocity,
