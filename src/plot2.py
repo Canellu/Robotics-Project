@@ -2,7 +2,7 @@ from telloFunctions import *
 import cv2
 import numpy as np
 import pyqtgraph as pg
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QGroupBox, QWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QGroupBox, QWidget, QSlider
 from pyqtgraph.Qt import QtCore, QtGui
 from random import randint
 
@@ -30,8 +30,12 @@ def update_plot_data():
     ret, frame = cap.read()
     # My webcam yields frames in BGR format
 
-    outputs = progYOLO(frame, net, whT)
-    info = findObjectYOLO(outputs, frame, classNames, 0) # YOLO
+    # outputs = progYOLO(frame, net, whT)
+    # info = findObjectYOLO(outputs, frame, classNames, 0) # YOLO
+    
+    info = findObjectHaar(frame)
+
+    # info = findObjectHSV(frame) # HSV
 
     X, P = kalman(info, X, P, Q, R, XInit)
 
@@ -52,14 +56,14 @@ def update_plot_data():
         plotKalman[1].append(frame.shape[0]//2)
     else:
         plotInfo[1].append(info[1])
-        plotKalman[0].append(X[1])
+        plotKalman[1].append(X[1])
     
     if info[2] == 0: # h
         plotInfo[2].append(200)
         plotKalman[2].append(200)
     else:
         plotInfo[2].append(info[2])
-        plotKalman[0].append(X[2])
+        plotKalman[2].append(X[2])
 
     cycle.append(cycle[-1] + 1)  # Add a new value 1 higher than the last.
 
@@ -98,21 +102,16 @@ win = QMainWindow()
 
 Q = np.array([[1.5, 0, 0], [0, 5, 0], [0, 0, 1.4]]) # Process noise
 R = np.array([[80, 0, 0], [0, 200, 0],[0, 0, 90]]) # Measurement noise
-X = np.array([480, 360, 180])
-XInit = np.array([480, 360, 180])
-P = np.array([[15, 0, 0],[0, 35, 0], [0, 0, 15]])
+X = np.array([320, 240, 200])
+XInit = np.array([320, 240, 200])
+P = np.array([[10, 0, 0],[0, 20, 0], [0, 0, 10]])
 
 # Data
 
-# cycle = list(range(10))
 cycle = [0]
 
 plotInfo = [[],[],[]] # [x,y,h,loopCount] Do not change value
 plotKalman = [[],[],[]] # Do not change value
-
-# plotInfo[0] = [randint(0,100) for _ in range(10)]
-# plotInfo[1] = [randint(0,100) for _ in range(10)]
-# plotInfo[2] = [randint(0,100) for _ in range(10)]
 
 plotInfo[0].append(320)
 plotInfo[1].append(240)
