@@ -45,7 +45,7 @@ def update_plot_data():
      # Remove the first y element.
     cycle.append(cycle[-1] + 1)  # Add a new value 1 higher than the last.
 
-    line1.setData(cycle, plotInfo[0])  # Update the data.
+    line1.setData(plotInfo[0], cycle)  # Update the data.
     line2.setData(plotInfo[1], cycle)  # Update the data.
     line3.setData(cycle, plotInfo[2])  # Update the data.
 
@@ -77,6 +77,8 @@ plotInfo[2].append(50)
 
 # Creating Plot
 
+
+# Left/Right
 plot1Widget = pg.PlotWidget()
 plot1Widget.setTitle("Left/Right", color='r', size='20pt')
 plot1Widget.setLabel('left', "<span style=\"color:red;font-size:20px\">Pixels</span>")
@@ -91,7 +93,7 @@ line1.getViewBox().invertY(True)
 
 
 
-
+# Up/Down
 plot2Widget = pg.PlotWidget()
 plot2Widget.setTitle("Up/Down", color='r', size='20pt')
 plot2Widget.setLabel('left', "<span style=\"color:red;font-size:20px\">Cycle</span>")
@@ -105,6 +107,7 @@ pen2 = pg.mkPen(color=(255, 0, 0), style=QtCore.Qt.DashLine)
 line2 = plot2Widget.plot(plotInfo[1], cycle, name='temp', pen=pen2)
 
 
+# Forward/Back
 plot3Widget = pg.PlotWidget()
 plot3Widget.setTitle("Forward/Back", color='r', size='20pt')
 plot3Widget.setLabel('left', "<span style=\"color:red;font-size:20px\">Pixels</span>")
@@ -153,12 +156,12 @@ groupBox2 = QGroupBox()
 
 hBoxTop = QHBoxLayout()
 hBoxTop.addWidget(camFrame)
-hBoxTop.addWidget(plot2Widget)
+hBoxTop.addWidget(plot1Widget)
 
 groupBox1.setLayout(hBoxTop)
 
 hBoxBot = QHBoxLayout()
-hBoxBot.addWidget(plot1Widget)
+hBoxBot.addWidget(plot2Widget)
 hBoxBot.addWidget(plot3Widget)
 
 groupBox2.setLayout(hBoxBot)
