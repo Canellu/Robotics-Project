@@ -1,5 +1,5 @@
 # Robotics Project 2020 - Drone tracking
-##### Contributors Anton Vo - Einar Tomter - Saodat Mansurova
+##### Contributors: Anton Vo - Einar Tomter - Saodat Mansurova
 
 #### Overview
 
