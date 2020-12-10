@@ -169,7 +169,7 @@ def findObjectYOLO(outputs, img, classNames, classNumber):
         return ([(img.shape[1]//2),(img.shape[0]//2),200])
 
 
-def findObjectHSV(img, minHSV=(26, 70, 84), maxHSV=(35, 225, 236)):
+def findObjectHSV(img, minHSV=(28, 69, 100), maxHSV=(39, 237, 255)):
 
     #define the lower and upper boundaries of the "green"
     # ball in the HSV color space, then initialize the
@@ -250,8 +250,12 @@ def trackObject(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slid
         speed[0] = pidY[0]*error[0] + pidY[1]*(error[0]+pError[0]) + pidY[2]*(error[0]-pError[0])
         speed[0] = int(np.clip(speed[0],-100, 100))
     
+
+
     # X - forward/back
     speed[1] = ( (pidX[0]*error[1]) + (pidX[1]*(error[1]+pError[1])) + (pidX[2]*(error[1]-pError[1])) ) * (-1)
+    if speed[1] >= 0:
+        speed[1] = speed[1]*2
     speed[1] = int(np.clip(speed[1],-100, 100))
     
     # Z - up/down

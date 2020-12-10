@@ -1,5 +1,6 @@
 from telloFunctions import *
 import cv2
+import time
 import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QGroupBox, QWidget, QSlider, QFrame, QLabel, QStyleFactory
@@ -9,9 +10,12 @@ from random import randint
 
 def update_plot_data():
 
+    global startTime
     global cycle
     global plotInfo
     global plotKalman
+    global counter
+    global FPS
 
     global line1
     global line2
@@ -32,25 +36,18 @@ def update_plot_data():
     print(f'Q values: {Q[0][0]} , {Q[1][1]} , {Q[2][2]}')
 
     ret, frame = cap.read()
+
     if whichMethod == 0:
         outputs = progYOLO(frame, net, whT)
         info = findObjectYOLO(outputs, frame, classNames, 0) # YOLO
     elif whichMethod == 1:
-        info = findObjectHSV(frame, minHSV=(21,113,129), maxHSV=(81,206,255)) # HSV
+        info = findObjectHSV(frame, minHSV=(18,44,97), maxHSV=(39,142,255)) # HSV
     else:
         info = findObjectHaar(frame)
 
 
     X, P = kalman(info, X, P, Q, R)
 
-
-
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    
-    img = QtGui.QImage(frame, frame.shape[1], frame.shape[0], QtGui.QImage.Format_RGB888)
-    
-    pix = QtGui.QPixmap.fromImage(img)
-    camFrame.setPixmap(pix)
 
     for i in range(3):
         plotInfo[i].append(info[i])
@@ -79,6 +76,22 @@ def update_plot_data():
     line3K.setData(cycle, plotKalman[2])
 
 
+    counter+=1
+    if (time.time() - startTime) > 1 :
+        FPS = int(counter / (time.time() - startTime))
+        counter = 0
+        startTime = time.time()
+
+    cv2.putText(frame, f'FPS: {FPS}', (50, 400), cv2.FONT_HERSHEY_DUPLEX, 1, (255,255,255))
+    
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    
+    img = QtGui.QImage(frame, frame.shape[1], frame.shape[0], QtGui.QImage.Format_RGB888)
+    
+    pix = QtGui.QPixmap.fromImage(img)
+    camFrame.setPixmap(pix)
+
+
 
 def readQVal(value):
     global Q
@@ -101,9 +114,13 @@ def changeMethod(button):
 
 boolQ = False
 whichMethod = 0
-
+counter = 0
+FPS = 0
+startTime = time.time()
 classNames, net, whT = initYOLO()
-cap = cv2.VideoCapture(0)
+
+# WEBCAM
+cap = cv2.VideoCapture(1)
 
 app = QApplication([])
 win = QMainWindow()
@@ -272,7 +289,7 @@ layout.addWidget(groupBox2)
 # app.setStyle('windowsvista')
 win.setWindowTitle('Kalman vs Measure - (Frame width: 640, height: 480)')
 win.setCentralWidget(central_widget)
-#win.move(2400,50)
+win.move(590,-5)
 win.setFixedSize(1324, 1080)
 
 win.show()

@@ -189,7 +189,7 @@ while connection:
 
         
         distance = readSlider('Distance', 'Display') # Read slider data
-        info[2] = 180 - (distance-50)*2 # Reset init values based on slider
+    
 
         # Kalman
        
