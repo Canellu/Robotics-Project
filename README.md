@@ -5,7 +5,7 @@
 
 ## Showcase of project (Gif)
 
-<img src=/images/QtGui.gif><br/>
+![Gif](/images/demo.gif)
 
 ## Introduction & overview
 
