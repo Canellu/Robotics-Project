@@ -38,10 +38,9 @@ classNumber = 0
 trackMethod = 0
 
 # Kalman variables, declarations
-Q = np.array([[1.5, 0, 0], [0, 5, 0], [0, 0, 1.4]]) # Process noise
-R = np.array([[80, 0, 0], [0, 200, 0],[0, 0, 90]]) # Measurement noise
+Q = np.array([[5, 0, 0], [0, 5, 0], [0, 0, 1.4]]) # Process noise
+R = np.array([[50, 0, 0], [0, 100, 0],[0, 0, 90]]) # Measurement noise
 X = np.array([480, 360, 180])
-XInit = np.array([480, 360, 180])
 P = np.array([[15, 0, 0],[0, 35, 0], [0, 0, 15]])
 
 # PID data
@@ -194,7 +193,7 @@ while connection:
 
         # Kalman
        
-        X, P = kalman(info, X, P, Q, R, XInit)
+        X, P = kalman(info, X, P, Q, R)
         
         # Control drone movement to track object
         pInfo, pError, infoPID = trackObject(drone, X, pInfo, frameWidth, frameHeight, pidY, pidX, pidZ, pidYaw, pError, distance, img, mode)

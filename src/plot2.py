@@ -39,7 +39,7 @@ def update_plot_data():
 
     # info = findObjectHSV(frame) # HSV
 
-    X, P = kalman(info, X, P, Q, R, XInit)
+    X, P = kalman(info, X, P, Q, R)
 
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     img = QtGui.QImage(frame, frame.shape[1], frame.shape[0], QtGui.QImage.Format_RGB888)
@@ -85,7 +85,7 @@ app = QApplication([])
 win = QMainWindow()
 
 Q = np.array([[5, 0, 0], [0, 2.5, 0], [0, 0, 1.4]]) # Process noise
-R = np.array([[20, 0, 0], [0, 25, 0],[0, 0, 20]]) # Measurement noise
+R = np.array([[20, 0, 0], [0, 25, 0],[0, 0, 30]]) # Measurement noise
 X = np.array([320, 240, 200])
 XInit = np.array([320, 240, 200])
 P = np.array([[10, 0, 0],[0, 20, 0], [0, 0, 10]])

@@ -488,7 +488,7 @@ def readSlider(name, frame):
     return cv2.getTrackbarPos(name, frame)    
 
 
-def kalman(info, XOld, POld, Q, R, Xinit):
+def kalman(info, XOld, POld, Q, R):
 
     # reminders
     # t: transpose
