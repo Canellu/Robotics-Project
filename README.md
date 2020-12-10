@@ -42,13 +42,28 @@ Data from the drones sensors are neatly displayed on the frame captured from the
 
 <br/>
 
-### Detection Methods
+## Detection Methods
 
-#### HAAR (Face detect)
+### HAAR (Face detect)
 
 This method is simple to setup but does not provide a very good detection, it often draws boundary boxes on random objects.
 
-<img src=/images/HAAR.png width="400"><br/> <img src=/images/HAAR (1).jpg width="400"><br/>
+<img src=/images/HAAR.jpg width="800<br/>
+
+
+### YOLO (Multiple classes)
+
+This method is more advanced but is also more computationally heavy to run and is more complex in terms of setting up and training algorithm.
+
+<img src=/images/YOLOCombi.png width="800<br/>
+                                      
+### HSV (Computer vision technique)
+
+This method is by far the simplest and runs really quickly, but does not recognize object. Detects only by given color through creating a mask.
+
+<img src=/images/HSVCombi.png width="600<br/>
+
+
 
 
 
