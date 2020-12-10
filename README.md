@@ -3,6 +3,10 @@
 
 <img src=/images/Tello.jpg width="800"><br/>
 
+## Showcase of project (Gif)
+
+<img src=/images/Tello.jpg><br/>
+
 ## Introduction & overview
 
 This project uses the drone **Tello** and showcases three different object detection method (HAAR, YOLO, HSV).
@@ -75,12 +79,7 @@ Blue line is kalman values, red line is measured values. The measured values is 
 
 
 
-###### ObjectTracking HSV
-https://www.pyimagesearch.com/2015/09/14/ball-tracking-with-opencv/
-
-###### Enable CUDA on openCV
-https://jamesbowley.co.uk/accelerate-opencv-4-5-0-on-windows-build-with-cuda-and-python-bindings/#visual_studio_cmake_cmd 
-
-###### Open Images V6 - Free labeled training data
-https://storage.googleapis.com/openimages/web/index.html
+### References
+**References to all the sources are included in the *Final_report.pdf*.**
+**Youtube videos and general google searchs are also used.**
 
