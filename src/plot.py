@@ -41,7 +41,7 @@ def update_plot_data():
         outputs = progYOLO(frame, net, whT)
         info = findObjectYOLO(outputs, frame, classNames, 0) # YOLO
     elif whichMethod == 1:
-        info = findObjectHSV(frame, minHSV=(18,44,97), maxHSV=(39,142,255)) # HSV
+        info = findObjectHSV(frame, minHSV=(21,84,95), maxHSV=(30,208,255)) # HSV
     else:
         info = findObjectHaar(frame)
 
@@ -120,7 +120,7 @@ startTime = time.time()
 classNames, net, whT = initYOLO()
 
 # WEBCAM
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 
 app = QApplication([])
 win = QMainWindow()
