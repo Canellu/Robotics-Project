@@ -52,8 +52,6 @@ def findObjectHaar(img):
     myFaceListArea = []
     returnArray = []
 
-    (img.shape[0])
-
     for(x,y,w,h) in faces:
 
         # drawing face boundary
@@ -239,8 +237,6 @@ def trackObject(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slid
     error[1] = (bh - percentH)/percentH * 100 # FOR/BACK
     error[2] = (cy - h//2) / (h/2) * 100 # UP/DOWN
 
-    print(error[0])
-    print(error[2])
     
 
     # PID
