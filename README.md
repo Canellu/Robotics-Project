@@ -60,6 +60,7 @@ This method is more advanced but is also more computationally heavy to run and i
 ### HSV (Computer vision technique)
 
 This method is by far the simplest and runs really quickly, but does not recognize object. Detects only by given color through creating a mask.
+Trackbars show minimum and maximum threshold values for detecting the tennis ball.
 
 <img src=/images/HSVCombi.png width="600"><br/>
 
