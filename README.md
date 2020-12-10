@@ -1,6 +1,8 @@
 # Robotics Project 2020 - Drone tracking
 ##### Contributors: Anton Vo - Einar Tomter - Saodat Mansurova
 
+![Tello](/images/Tello.jpg)
+
 ## Introduction & overview
 
 This project uses the drone **Tello** and showcases three different object detection method (HAAR, YOLO, HSV).
