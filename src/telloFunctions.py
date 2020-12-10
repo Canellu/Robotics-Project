@@ -171,26 +171,19 @@ def findObjectYOLO(outputs, img, classNames, classNumber):
         return ([(img.shape[1]//2),(img.shape[0]//2),200])
 
 
-def findObjectHSV(img):
+def findObjectHSV(img, minHSV=(26, 70, 84), maxHSV=(35, 225, 236)):
 
     #define the lower and upper boundaries of the "green"
     # ball in the HSV color space, then initialize the
     # list of tracked points
-    lowerHSV = (19,63,114)
-    upperHSV = (60,179,255)
-
-    tomatoMin = (25,79,81)
-    tomatoMax = (37,255,255)
-
-    tennisMin = (26, 70, 84)
-    tennisMax = (35, 225, 236)
+  
 
     center = (0,0)
     radius = 0
     
     blurred = cv2.GaussianBlur(img, (11, 11), 0)
     hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
-    mask = cv2.inRange(hsv, tennisMin, tennisMax)
+    mask = cv2.inRange(hsv, minHSV, maxHSV)
     mask = cv2.erode(mask, None, iterations=2)
     mask = cv2.dilate(mask, None, iterations=2)
 
