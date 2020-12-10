@@ -5,38 +5,25 @@ import cv2
 import threading
 import numpy as np
 
+
 # VARIABLES # ----------------------------------------
 
-# Control panel (ALL STATIC, DONT CHANGE)
+# Control panel
 listener = None # To check wether listener thread is created
 keyPressed = None # Value of pressed keys
 trackOn = False # True to track object, false otherwise
 mode = True  # True = Rotation, False = Translation
-safeQuit = False # Do not change value. Safety measures.
-plotOn = False # True to draw plots of X Y H.
 OSDon = True # Turn on and off OSD
-
-
-# Kalman variables, declarations
-Q = np.array([[1.5, 0, 0], [0, 5, 0], [0, 0, 1.4]]) # Process noise
-R = np.array([[80, 0, 0], [0, 200, 0],[0, 0, 90]]) # Measurement noise
-X = np.array([480, 360, 180])
-XInit = np.array([480, 360, 180])
-P = np.array([[1, 0, 0],[0, 1, 0], [0, 0, 1]])
 
 
 # Plotting variables, parameters
 countArray = []
 plotInfo = [[],[],[],[]] # [x,y,h,loopCount] Do not change value
 plotKalman = [[],[],[]] # Do not change value
+plotPID = [[],[],[]] # Do not change value
+plotError = [[],[],[]] # Do not change value
 loopCount = 0
 updateCycle = 3
-
-
-# Drone data
-droneStates = []
-S = 30
-classNumber = 0
 
 # FPS
 counter = 0
@@ -44,18 +31,30 @@ FPS = 0
 startTime = time.time()
 pulse = True # For Red dot on OSD to pulse
 
+# Drone data
+droneStates = []
+S = 40
+classNumber = 0
+trackMethod = 0
+
+# Kalman variables, declarations
+Q = np.array([[5, 0, 0], [0, 5, 0], [0, 0, 1.4]]) # Process noise
+R = np.array([[100, 0, 0], [0, 100, 0],[0, 0, 90]]) # Measurement noise
+X = np.array([480, 360, 180])
+P = np.array([[15, 0, 0],[0, 35, 0], [0, 0, 15]])
 
 # PID data
-pidY = [0.4, 0.6, 0] # Left right
-pidX = [0.4, 0.75, 0] # Forward back
-pidZ = [0.9, 1.2, 0] # Up down
-pidYaw = [0.7, 0.2, 0] # Rotate
-info = [0,0,0,0] # x, y, width, height
+pidY = [0.25, 0.02, 0.2] # Left right
+pidX = [0.5, 0, 0.2] # Forward back
+pidZ = [0.6, 0.2, 0.2] # Up down
+pidYaw = [0.4, 0.1, 0.4] # Rotate
+info = [0,0,0] # x, y, width, height
 pInfo = [0, 0, 0] # x, y, height
 pError = [0, 0, 0] # yaw, height, distance
 
 
 # VARIABLES END # -----------------------------------------------
+
 
 # Keyboard listener
 def on_release(key):
@@ -65,6 +64,8 @@ def on_release(key):
         if key.char == 'q':
             keyPressed = key.char
         elif key.char == 'c':
+            keyPressed = key.char
+        elif key.char == 'b':
             keyPressed = key.char
         elif key.char == '1':
             keyPressed = key.char
@@ -94,6 +95,7 @@ def on_release(key):
         elif key == Key.down:
             drone.for_back_velocity = 0
 
+
 def on_press(key):
     global keyPressed
 
@@ -115,19 +117,12 @@ def on_press(key):
             drone.for_back_velocity = drone.speed
         elif key == Key.down:
             drone.for_back_velocity = -drone.speed
-        
-def updateMovement():
-    # Update movement
-    if drone.send_rc_control:
-        drone.send_rc_control(drone.left_right_velocity,
-                              drone.for_back_velocity,
-                              drone.up_down_velocity,
-                              drone.yaw_velocity)
+
 
 def CheckWhichKeyIsPressed():  
     global listener 
     if listener == None:  
-        listener = Listener(on_release=on_release, on_press=on_press)
+        listener = Listener(on_release=on_release, on_press=on_press, daemon=True)
         listener.start()
         print("CREATING LISTENER THREAD\n\n")
 
@@ -139,18 +134,19 @@ connection, drone = initializeTello()
 
 # Create objects 
 if connection:
+    print("----- Connection to drone succeeded -----")
+
+    # Drone var
+    drone.speed = S
 
     # YOLO variables
     classNames, net, whT = initYOLO()
 
     # OSD Thread
-    dataThread = threading.Thread(target=droneData, args=(droneStates,), daemon=True)
+    dataThread = threading.Thread(target=droneData, args=(droneStates,), daemon = True)
     dataThread.start()
 
-    # Create plot
-    if plotOn:
-        fig, ax = plt.subplots(1)
-        fig.show()
+
 
 
     # Create Distance slider
@@ -158,10 +154,11 @@ if connection:
     
     #qSlider("Display")
 
-    drone.speed = S
-
     # Function that creates listener on different thread that detects a key press/release
     CheckWhichKeyIsPressed()
+    
+else:
+    print("----- Connection to drone failed -----")
 
 
 # Loop
@@ -174,42 +171,41 @@ while connection:
     #Check wether to track object or not
     if trackOn:
 
-        blob = cv2.dnn.blobFromImage(img, 1 / 255, (whT, whT), [0, 0, 0], 1, crop=False) #Convert Image to a format the network can take (blobs)
-        net.setInput(blob) #Input the image to the network
-        layerNames = net.getLayerNames() #Names of all layers in network (relu, conv etc...)
-        outputNames = [(layerNames[i[0] - 1]) for i in net.getUnconnectedOutLayers()] #Find names of output layers (3 layers)
-        outputs = net.forward(outputNames)# Returns outputs as numpy.2darray from the layernames forwarded.
-                                        # (rows , columns) = (boxnumber , ( 0-4 = cx,cy,w,h, score of how 
-                                        # likely the box contain an object and how accurate the boundary 
-                                        # box is, rest is probability per classes) )
-
-        # Tracking methods: HAAR, YOLO
-        # img, info = findFace(img) # HAAR
-        img, info = findFaceYolo(outputs, img, classNames, classNumber) # YOLO
-
-    
-        # Plotting center coordinates
-        if plotOn:
-            if (loopCount % updateCycle) == 0:
-                plotInfo, plotKalman = plot(frameWidth, frameHeight, fig, ax, info, X, loopCount, plotInfo, plotKalman)
-            loopCount += 1
-
-
-        # Read slider data
-        distance = readSlider('Distance', 'Display')
         
-        XInit[2] = 180 - (distance-50)*2
+
+        # Tracking methods: HAAR, YOLO, HSV
+
+        if trackMethod == 0:
+            outputs = progYOLO(img, net, whT)
+            info = findObjectYOLO(outputs, img, classNames, classNumber) # YOLO
+
+        elif trackMethod == 1:
+            info = findObjectHaar(img) # HAAR
+
+        else:
+            info = findObjectHSV(img) # HSV
+        
+
+
+        
+        distance = readSlider('Distance', 'Display') # Read slider data
+    
 
         # Kalman
-        # qVal = readSlider('Q Value', 'Display') # For testing purposes
-        # Q = np.array([[(qVal/100),0],[0,(qVal/100)]])
-        X, P = kalman(info, X, P, Q, R, XInit)
+       
+        X, P = kalman(info, X, P, Q, R)
         
         # Control drone movement to track object
-        pInfo, pError = trackFace(drone, X, pInfo, frameWidth, frameHeight, pidY, pidX, pidZ, pidYaw, pError, distance, img, mode)
+        pInfo, pError, infoPID = trackObject(drone, X, pInfo, frameWidth, frameHeight, pidY, pidX, pidZ, pidYaw, pError, distance, img, mode)
+
+
+       
 
     else:
-        updateMovement()
+
+        updateMovement(drone)
+    
+
     
 
     if OSDon:
@@ -217,8 +213,8 @@ while connection:
         counter+=1
         if (time.time() - startTime) > 1 :
             FPS = int(counter / (time.time() - startTime))
-            if FPS > 30:
-                FPS = 30
+            # if FPS > 30:
+            #     FPS = 30
             counter = 0
             startTime = time.time()
             pulse = not pulse
@@ -228,7 +224,7 @@ while connection:
         cv2.putText(img, 'FPS:', (166,650), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,255), 1)
         cv2.putText(img, str(FPS), (228,650), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,255), 2)
         
-        drawOSD(droneStates, img, pulse, mode, trackOn, classNames, classNumber)
+        drawOSD(droneStates, img, pulse, mode, trackOn, classNames, classNumber, trackMethod)
 
     # Show frames on window for 1ms
     cv2.imshow('Display', img)
@@ -238,27 +234,26 @@ while connection:
 
     # To land and end connection
     if keyPressed == 'q':
+        cv2.destroyAllWindows()
         drone.end()
-        plt.close('all')
-        # print(f"VARIANCE X: {np.var(plotInfo[0])} LEN: {len(plotInfo[0])}") # Measurement variance in X
-        # print(f"VARIANCE Y: {np.var(plotInfo[1])} LEN: {len(plotInfo[1])}") # Measurement variance in Y
-        # print(f"VARIANCE FB: {np.var(plotInfo[2])} LEN: {len(plotInfo[2])}") # Measurement variance in Forward-Back
-        safeQuit = True
+        
         break
     
     # To take off
     elif keyPressed == 'f':
-        drone.takeoff()
+       drone.takeoff()
    
     # To land drone
     elif keyPressed == 'l':
         drone.land()
+
 
     # Enable/Disable tracking
     elif keyPressed == 't':
         trackOn = True
     elif keyPressed == 'm':
         trackOn = False
+        updateMovement(drone, resetMove=True)
 
     # Change track mode
     elif keyPressed == '1': # Rotation     
@@ -276,17 +271,15 @@ while connection:
         else:
             classNumber += 1
 
+    elif keyPressed == 'b':
+        if trackMethod == 2:
+            trackMethod = 0
+        else:
+            trackMethod += 1
+
     keyPressed = None
 
 
 
-
-
-# Safety measure
-if not safeQuit:
-    plt.close('all')
-    drone.end() # If program ended without 'q'
-
+drone.end()
 cv2.destroyAllWindows()
-
-
