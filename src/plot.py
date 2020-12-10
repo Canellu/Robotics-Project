@@ -272,7 +272,7 @@ layout.addWidget(groupBox2)
 # app.setStyle('windowsvista')
 win.setWindowTitle('Kalman vs Measure - (Frame width: 640, height: 480)')
 win.setCentralWidget(central_widget)
-win.move(2400,50)
+#win.move(2400,50)
 win.setFixedSize(1324, 1080)
 
 win.show()
