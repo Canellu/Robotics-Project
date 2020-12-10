@@ -265,48 +265,25 @@ def trackObject(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slid
     speed[2] = int(np.clip(speed[2],-100, 100))
 
 
-
+    # Update speed
     # Rotation / Translation
     if mode:
         # Rotation
-        if cx != 0:
-            drone.yaw_velocity = speed[3]
-        else:
-            drone.yaw_velocity = 0
-            drone.left_right_velocity = 0
-            error[0] = 0
-          
+        drone.yaw_velocity = speed[3]
+        drone.left_right_velocity = 0
     else:
         # Translation
-        if cx != 0:
-            drone.left_right_velocity = speed[0]
-        else:
-            drone.left_right_velocity = 0
-            drone.yaw_velocity = 0
-            error[0] = 0
-
-    # Forward - Back
-    if bh != 0:
-        drone.for_back_velocity = speed[1]
-    else:
-        drone.for_back_velocity = 0
-        error[1] = 0       
-
-    #  Up - down
-    if cy != 0:
-        drone.up_down_velocity = speed[2]
-    else:
-        drone.up_down_velocity = 0
-        error[2] = 0
-
-  
-
+        drone.left_right_velocity = speed[0]
+        drone.yaw_velocity = 0
+    # Forward / Back
+    drone.for_back_velocity = speed[1]
+    # Up / Down
+    drone.up_down_velocity = speed[2]
 
     # Update movement
     updateMovement(drone)
 
-
-    
+    # Update values
     pInfo = info
     if mode:
         plotPID = [speed[3], speed[1], speed[2]]
@@ -516,30 +493,25 @@ def kalman(info, XOld, POld, Q, R, Xinit):
     # reminders
     # t: transpose
 
-    if info[2] == 0: # Testing if object is within view
-        XNew = Xinit
-        PNew = POld
+    # state matrix measurements
+    XM = np.array([info[0], info[1], info[2]]) # X measured
 
-    else:
-        # state matrix measurements
-        XM = np.array([info[0], info[1], info[2]]) # X measured
+    # Transform matrices: A,B,C,I = I3
+    # A = np.eye(3)
+    # C = np.eye(3)
+    I = np.eye(3)
 
-        # Transform matrices: A,B,C,I = I3
-        # A = np.eye(3)
-        # C = np.eye(3)
-        I = np.eye(3)
+    # Predict cycle
+    X = XOld                          # X = A*X-1; predicted state estimate
+    P = POld + Q                      # P = A*P-1*At + Q; predicted state variance
 
-        # Predict cycle
-        X = XOld                          # X = A*X-1; predicted state estimate
-        P = POld + Q                      # P = A*P-1*At + Q; predicted state variance
+    # Update cycle
+    K = P.dot(np.linalg.inv(P + R))   # K = P*Ct / (C*P*Ct + R); kalman gain
+    XNew = X + K.dot(XM - X)         # X = X + K*(XM - C*X); new estimate
+    PNew = (I - K).dot(P)             # P = (I - K * C) * P; new variance
+    # print(f'Measured: {XM}\nPrediction: {XNew}')
 
-        # Update cycle
-        K = P.dot(np.linalg.inv(P + R))   # K = P*Ct / (C*P*Ct + R); kalman gain
-        XNew = X + K.dot(XM - X)         # X = X + K*(XM - C*X); new estimate
-        PNew = (I - K).dot(P)             # P = (I - K * C) * P; new variance
-        # print(f'Measured: {XM}\nPrediction: {XNew}')
-
-        XNew = XNew.astype(int)
+    XNew = XNew.astype(int)
 
     return XNew, PNew
 

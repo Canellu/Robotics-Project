@@ -41,33 +41,14 @@ def update_plot_data():
 
     X, P = kalman(info, X, P, Q, R, XInit)
 
-    print(X[0], info[0])
-
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     img = QtGui.QImage(frame, frame.shape[1], frame.shape[0], QtGui.QImage.Format_RGB888)
     pix = QtGui.QPixmap.fromImage(img)
     camFrame.setPixmap(pix)
 
-    if info[0] == 0: # x
-        plotInfo[0].append(frame.shape[1]//2)
-        plotKalman[0].append(frame.shape[1]//2)
-    else:
-        plotInfo[0].append(info[0])
-        plotKalman[0].append(X[0])
-    
-    if info[1] == 0: # y
-        plotInfo[1].append(frame.shape[0]//2)
-        plotKalman[1].append(frame.shape[0]//2)
-    else:
-        plotInfo[1].append(info[1])
-        plotKalman[1].append(X[1])
-    
-    if info[2] == 0: # h
-        plotInfo[2].append(200)
-        plotKalman[2].append(200)
-    else:
-        plotInfo[2].append(info[2])
-        plotKalman[2].append(X[2])
+    for i in range(3):
+        plotInfo[i].append(info[i])
+        plotKalman[i].append(X[i])
 
     cycle.append(cycle[-1] + 1)  # Add a new value 1 higher than the last.
 
@@ -83,8 +64,7 @@ def update_plot_data():
 
         cycle.pop(0)
 
-
-    line1.setData(plotInfo[0], cycle)  # Update the data.
+    line1.setData(plotInfo[0], cycle)  # Update the data
     line2.setData(cycle, plotInfo[1])
     line3.setData(cycle, plotInfo[2])
 
@@ -104,8 +84,8 @@ cap = cv2.VideoCapture(0)
 app = QApplication([])
 win = QMainWindow()
 
-Q = np.array([[10, 0, 0], [0, 5, 0], [0, 0, 1.4]]) # Process noise
-R = np.array([[80, 0, 0], [0, 200, 0],[0, 0, 90]]) # Measurement noise
+Q = np.array([[5, 0, 0], [0, 2.5, 0], [0, 0, 1.4]]) # Process noise
+R = np.array([[20, 0, 0], [0, 25, 0],[0, 0, 20]]) # Measurement noise
 X = np.array([320, 240, 200])
 XInit = np.array([320, 240, 200])
 P = np.array([[10, 0, 0],[0, 20, 0], [0, 0, 10]])
