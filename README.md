@@ -1,3 +1,17 @@
+# Robotics Project 2020 - Drone tracking
+### Anton Vo - Einar Tomter - Saodat Mansurova
+
+#### Overview
+
+This project uses the drone **Tello** and showcases three different object detection method.
+The system controlling the drone is also equipped with a PID-controller and Kalman filter for smoother movements and reactions.
+
+
+
+
+
+
+
 # ObjectTracking
 ## Source: https://www.pyimagesearch.com/2015/09/14/ball-tracking-with-opencv/
 
