@@ -12,8 +12,13 @@ The system controlling the drone is equipped with a PID-controller and Kalman fi
 
 We have implemented a control system which allow us to switch between tracking and manual control in addition to tracking mode and object.
 The image below have highlighted all the keys available.
+
 <img src=/images/keyboardLayout.png height="300">
 
+* WASD - altitude (up/down) and rotation
+* Arrows - translation (forward/backward/left/right)
+* 
+<h3 style="color:#ff0000">Danger</h3>
 
 ##### On screen display (OSD)
 
