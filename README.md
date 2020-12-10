@@ -1,4 +1,4 @@
-# Robotics Project 2020 - Drone tracking
+# Robotics Project 2020 (Oslo Metropolitan University) - Drone tracking
 ##### Contributors: Anton Vo - Einar Tomter - Saodat Mansurova
 
 <img src=/images/Tello.jpg width="800"><br/>
@@ -42,7 +42,13 @@ Data from the drones sensors are neatly displayed on the frame captured from the
 
 <br/>
 
-### 
+### Detection Methods
+
+#### HAAR (Face detect)
+
+This method is simple to setup but does not provide a very good detection, it often draws boundary boxes on random objects.
+
+<img src=/images/HAAR.png width="400"><br/> <img src=/images/HAAR (1).jpg width="400"><br/>
 
 
 
