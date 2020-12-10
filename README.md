@@ -15,14 +15,16 @@ The image below have highlighted all the keys available.
 
 <img src=/images/keyboardLayout.png height="300">
 
-* (&#x1F534;) WASD - altitude (up/down) and rotation
-* Arrows - translation (forward/backward/left/right)
-* 
+* :blue_square: altitude and rotation (WASD)
+* :blue_square: translation - forward/backward/left/right (arrow keys)
+* :green_square:Take off (F) - Land (L)
+* :red_square: Object tracking on (T) - Manual control on (M) - Quit program (Q)
+* :purple_square: Track mode rotation/translation (1 & 2) - Object detection method (B) - class change (C)
+
 ##### On screen display (OSD)
 
 Data from the drones sensors are neatly displayed on the frame captured from the video feed sent from the drone.
-
-
+![OSD](/images/OSD.png)
 
 
 
