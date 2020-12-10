@@ -5,7 +5,7 @@
 
 ## Showcase of project (Gif)
 
-<img src=/images/Tello.jpg><br/>
+<img src=/images/QtGui.gif><br/>
 
 ## Introduction & overview
 
