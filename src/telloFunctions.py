@@ -70,7 +70,7 @@ def findObjectHaar(img):
         returnArray = [myFaceListC[i][0],myFaceListC[i][1],myFaceListC[i][3]]
         return returnArray
     else:
-        return [0,0,0]
+        return ([320,240,200])
 
 
 def initYOLO():
@@ -166,7 +166,7 @@ def findObjectYOLO(outputs, img, classNames, classNumber):
 
         return returnArray
     else:
-        return ([0,0,0])
+        return ([320,240,200])
 
 
 def findObjectHSV(img):
@@ -208,7 +208,7 @@ def findObjectHSV(img):
     
     
 
-    return [0, 0, 0]
+    return ([320,240,200])
 
 
 def trackObject(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, sliderVal, frame, mode):

@@ -122,19 +122,14 @@ def plot(frameWidth, frameHeight, fig, ax, info, X, loop, plotInfo, plotKalman, 
     ax[0].set_xlabel('Kalman')
     ax[0].set_ylabel('Position')
     ax[0].set_title('Position vs Kalman')
-    ax[0].cla()
-    ax[0].plot(plotPID[0], plotInfo[3], color='b')
-    ax[0].plot(plotError[0], plotInfo[3], color='r')
-    ax[0].set_xticks(x_axis)
-    ax[0].set_ylim(bottom=max(0, loop-100), top=loop+100)
+  
 
     # x-axis vs loop iteration
     ax[1].title.set_text('Left - Right translation')
     ax[1].cla()
     ax[1].plot(plotInfo[0], plotInfo[3], color='r')
     ax[1].plot(plotKalman[0], plotInfo[3], color='b')
-    ax[1].set_xticks(x_axis)
-    ax[1].set_ylim(bottom=max(0, loop-100), top=loop+100)
+)
 
     # y-axis vs loop iteration
     ax[2].title.set_text('Up - Down translation')
@@ -142,8 +137,7 @@ def plot(frameWidth, frameHeight, fig, ax, info, X, loop, plotInfo, plotKalman, 
     ax[2].plot(plotInfo[3], plotInfo[1], color='r')
     ax[2].plot(plotInfo[3], plotKalman[1], color='b')
     ax[2].invert_yaxis()
-    ax[2].set_xlim(left=max(0, loop-100), right=loop+100)
-    ax[2].set_yticks(y_axis)
+
 
     # forwardback vs loop iteration   
     ax[3].title.set_text('Forward - Backward translation')

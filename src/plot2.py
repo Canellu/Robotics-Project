@@ -32,12 +32,16 @@ def update_plot_data():
 
     # outputs = progYOLO(frame, net, whT)
     # info = findObjectYOLO(outputs, frame, classNames, 0) # YOLO
+
+    # print(frame.shape[1], frame.shape[0])
     
     info = findObjectHaar(frame)
 
     # info = findObjectHSV(frame) # HSV
 
     X, P = kalman(info, X, P, Q, R, XInit)
+
+    print(X[0], info[0])
 
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     img = QtGui.QImage(frame, frame.shape[1], frame.shape[0], QtGui.QImage.Format_RGB888)
@@ -100,7 +104,7 @@ cap = cv2.VideoCapture(0)
 app = QApplication([])
 win = QMainWindow()
 
-Q = np.array([[1.5, 0, 0], [0, 5, 0], [0, 0, 1.4]]) # Process noise
+Q = np.array([[10, 0, 0], [0, 5, 0], [0, 0, 1.4]]) # Process noise
 R = np.array([[80, 0, 0], [0, 200, 0],[0, 0, 90]]) # Measurement noise
 X = np.array([320, 240, 200])
 XInit = np.array([320, 240, 200])
