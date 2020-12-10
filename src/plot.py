@@ -2,7 +2,7 @@ from telloFunctions import *
 import cv2
 import numpy as np
 import pyqtgraph as pg
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QGroupBox, QWidget, QSlider
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QGroupBox, QWidget, QSlider, QFrame, QLabel, QStyleFactory
 from pyqtgraph.Qt import QtCore, QtGui
 from random import randint
 
@@ -27,20 +27,27 @@ def update_plot_data():
     global R
     global XInit
 
+    global whichMethod
+
+    print(f'In update: {Q}')
+
     ret, frame = cap.read()
-    # My webcam yields frames in BGR format
+    if whichMethod == 0:
+        outputs = progYOLO(frame, net, whT)
+        info = findObjectYOLO(outputs, frame, classNames, 0) # YOLO
+    elif whichMethod == 1:
+        info = findObjectHSV(frame, minHSV=(21,113,129), maxHSV=(81,206,255)) # HSV
+    else:
+        info = findObjectHaar(frame)
 
-    # outputs = progYOLO(frame, net, whT)
-    # info = findObjectYOLO(outputs, frame, classNames, 0) # YOLO
-    
-    info = findObjectHaar(frame)
-
-    # info = findObjectHSV(frame) # HSV
 
     X, P = kalman(info, X, P, Q, R, XInit)
 
+
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    
     img = QtGui.QImage(frame, frame.shape[1], frame.shape[0], QtGui.QImage.Format_RGB888)
+    
     pix = QtGui.QPixmap.fromImage(img)
     camFrame.setPixmap(pix)
 
@@ -89,16 +96,35 @@ def update_plot_data():
     line3K.setData(cycle, plotKalman[2])
 
 
-def readQVal(value):
-    print(f'Q val: {value}')
 
+def readQVal(value):
+    global Q
+    global boolQ
+    if boolQ:
+        newQ = value/100
+        Q = [[newQ, 0, 0],[0, newQ, 0],[0, 0, newQ]]
+    boolQ = True
+
+
+def changeMethod(button):
+    global whichMethod
+    if button.text() == 'YOLO':
+        whichMethod = 0
+    elif button.text() == 'HSV':
+        whichMethod = 1
+    else:
+        whichMethod = 2
+
+
+boolQ = False
+whichMethod = 0
 
 classNames, net, whT = initYOLO()
-
 cap = cv2.VideoCapture(0)
 
 app = QApplication([])
 win = QMainWindow()
+
 
 Q = np.array([[1.5, 0, 0], [0, 5, 0], [0, 0, 1.4]]) # Process noise
 R = np.array([[80, 0, 0], [0, 200, 0],[0, 0, 90]]) # Measurement noise
@@ -130,12 +156,15 @@ penKalman = pg.mkPen(color=(0, 0, 255))
 
 # Left/Right
 plot1Widget = pg.PlotWidget()
-plot1Widget.setTitle("Left/Right", color='r', size='20pt')
-plot1Widget.setLabel('left', "<span style=\"color:red;font-size:20px\">Pixels</span>")
-plot1Widget.setLabel('bottom', "<span style=\"color:red;font-size:20px\">Cycle</span>")
+plot1Widget.setTitle("Left - Right", color=(0,0,0), size='20pt')
+plot1Widget.setLabel('left', "<span style=\"color:black;font-size:14px\">Pixels</span>")
+plot1Widget.setLabel('bottom', "<span style=\"color:black;font-size:14px\">Cycle</span>")
 plot1Widget.addLegend()
 plot1Widget.setXRange(0, 640)
 plot1Widget.setYRange(max(0, cycle[0]-100), (cycle[0]+100))
+plot1Widget.setLimits(xMin=0, xMax=640, minXRange=0, maxXRange=640) # Limit zoom and pan
+plot1Widget.setFixedHeight(480)
+plot1Widget.setFixedWidth(640)
 
 line1 = plot1Widget.plot(cycle, plotInfo[0], name='measured', pen=penInfo)
 line1K = plot1Widget.plot(cycle, plotKalman[0], name='kalman', pen=penKalman)
@@ -144,12 +173,15 @@ line1K = plot1Widget.plot(cycle, plotKalman[0], name='kalman', pen=penKalman)
 
 # Up/Down
 plot2Widget = pg.PlotWidget()
-plot2Widget.setTitle("Up/Down", color='r', size='20pt')
-plot2Widget.setLabel('left', "<span style=\"color:red;font-size:20px\">Cycle</span>")
-plot2Widget.setLabel('bottom', "<span style=\"color:red;font-size:20px\">Pixels</span>")
+plot2Widget.setTitle("Up - Down", color=(0,0,0), size='20pt')
+plot2Widget.setLabel('left', "<span style=\"color:black;font-size:14px\">Pixels</span>")
+plot2Widget.setLabel('bottom', "<span style=\"color:black;font-size:14px\">Cycle</span>")
 plot2Widget.addLegend()
 plot2Widget.setXRange(max(0, cycle[0]-100), (cycle[0]+100))
 plot2Widget.setYRange(0, 480)
+plot2Widget.setLimits(yMin=0, yMax=480, minYRange=0, maxYRange=480)
+plot2Widget.setFixedHeight(480)
+plot2Widget.setFixedWidth(640)
 
 line2 = plot2Widget.plot(plotInfo[1], cycle, name='measured', pen=penInfo)
 line2K = plot2Widget.plot(plotKalman[1], cycle, name='kalman', pen=penKalman)
@@ -159,12 +191,15 @@ line2K.getViewBox().invertY(True)
 
 # Forward/Back
 plot3Widget = pg.PlotWidget()
-plot3Widget.setTitle("Forward/Back", color='r', size='20pt')
-plot3Widget.setLabel('left', "<span style=\"color:red;font-size:20px\">Pixels</span>")
-plot3Widget.setLabel('bottom', "<span style=\"color:red;font-size:20px\">Cycle</span>")
+plot3Widget.setTitle("Forward - Backward", color=(0,0,0), size='20pt')
+plot3Widget.setLabel('left', "<span style=\"color:black;font-size:14px\">Pixels</span>")
+plot3Widget.setLabel('bottom', "<span style=\"color:black;font-size:14px\">Cycle</span>")
 plot3Widget.addLegend()
 plot3Widget.setXRange(max(0, cycle[0]-100), (cycle[0]+100))
 plot3Widget.setYRange(0, 400)
+plot3Widget.setLimits(yMin=0, yMax=400, minYRange=0, maxYRange=400)
+plot3Widget.setFixedHeight(480)
+plot3Widget.setFixedWidth(640)
 
 line3 = plot3Widget.plot(cycle, plotInfo[2], name='measured', pen=penInfo)
 line3K = plot3Widget.plot(cycle, plotKalman[2], name='kalman', pen=penKalman)
@@ -185,11 +220,6 @@ timer.setInterval(50)
 timer.timeout.connect(update_plot_data)
 timer.start()
 
-# # cam
-# timer1 = QtCore.QTimer()
-# timer1.setInterval(200)
-# timer1.timeout.connect(getFrame)
-# timer1.start()
 
 
 
@@ -201,27 +231,53 @@ central_widget = QWidget()
 
 layout = QVBoxLayout(central_widget)
 
+
+
+
+
+
+hBoxButtons = QHBoxLayout()
+buttonHAAR = QPushButton('HAAR')
+buttonYOLO = QPushButton('YOLO')
+buttonHSV = QPushButton('HSV')
+buttonHAAR.clicked.connect(lambda: changeMethod(buttonHAAR))
+buttonYOLO.clicked.connect(lambda: changeMethod(buttonYOLO))
+buttonHSV.clicked.connect(lambda: changeMethod(buttonHSV))
+hBoxButtons.addWidget(buttonHAAR)
+hBoxButtons.addWidget(buttonYOLO)
+hBoxButtons.addWidget(buttonHSV)
+
+
+groupBox1 = QGroupBox()
+hBoxTop = QHBoxLayout()
+hBoxTop.addWidget(camFrame)
+hBoxTop.addWidget(plot1Widget)
+groupBox1.setLayout(hBoxTop)
+
+
+
+groupBox2 = QGroupBox()
+hBoxBot = QHBoxLayout()
+hBoxBot.addWidget(plot2Widget)
+hBoxBot.addWidget(plot3Widget)
+groupBox2.setLayout(hBoxBot)
+
+
+
+qtext = QLabel()
+qtext.setText("Q - variance slider")
 qSlider = QSlider(QtCore.Qt.Horizontal)
 qSlider.valueChanged[int].connect(readQVal)
 qSlider.setMaximum(200)
 qSlider.setSliderPosition(100)
-layout.addWidget(qSlider)
 
-groupBox1 = QGroupBox()
-groupBox2 = QGroupBox()
+sliderBox = QHBoxLayout()
+sliderBox.addWidget(qtext)
+sliderBox.addWidget(qSlider)
 
-hBoxTop = QHBoxLayout()
-hBoxTop.addWidget(camFrame)
-hBoxTop.addWidget(plot1Widget)
 
-groupBox1.setLayout(hBoxTop)
-
-hBoxBot = QHBoxLayout()
-hBoxBot.addWidget(plot2Widget)
-hBoxBot.addWidget(plot3Widget)
-
-groupBox2.setLayout(hBoxBot)
-
+layout.addLayout(sliderBox)
+layout.addLayout(hBoxButtons)
 layout.addWidget(groupBox1)
 layout.addWidget(groupBox2)
 
@@ -229,7 +285,17 @@ layout.addWidget(groupBox2)
 
 # Run program
 
+
+# print(QStyleFactory.keys())
+# app.setStyle('windowsvista')
+win.setWindowTitle('Kalman vs Measure - (Frame width: 640, height: 480)')
 win.setCentralWidget(central_widget)
+win.move(2400,50)
+win.setFixedSize(1324, 1080)
+
 win.show()
+print(win.size())
+
+
 app.exit(app.exec_())
 cap.release()
