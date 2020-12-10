@@ -5,6 +5,9 @@
 
 This project uses the drone **Tello** and showcases three different object detection method (HAAR, YOLO, HSV).
 The system controlling the drone is equipped with a PID-controller and Kalman filter for smoother movements and reactions.
+Below is a simple flowchart of the system. We first connect to the drone, take off then use the frames from drone to detect and object. The data from detection goes through kalman filter and enters PID control calculations. Lastly send movement commands based on PID to track an object.
+
+![Flow chart](/images/FlowChart.png)
 
 ## Features
 
@@ -35,7 +38,9 @@ Data from the drones sensors are neatly displayed on the frame captured from the
 * Top indicators: Time since motor start and battery level
 * Bottom indicators: Tracking mode, detection mode, FPS.
 
+<br/>
 
+### 
 
 
 
