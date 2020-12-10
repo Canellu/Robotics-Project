@@ -39,7 +39,7 @@ trackMethod = 0
 
 # Kalman variables, declarations
 Q = np.array([[5, 0, 0], [0, 5, 0], [0, 0, 1.4]]) # Process noise
-R = np.array([[50, 0, 0], [0, 100, 0],[0, 0, 90]]) # Measurement noise
+R = np.array([[100, 0, 0], [0, 100, 0],[0, 0, 90]]) # Measurement noise
 X = np.array([480, 360, 180])
 P = np.array([[15, 0, 0],[0, 35, 0], [0, 0, 15]])
 
@@ -189,7 +189,7 @@ while connection:
 
         
         distance = readSlider('Distance', 'Display') # Read slider data
-        XInit[2] = 180 - (distance-50)*2 # Reset init values based on slider
+        info[2] = 180 - (distance-50)*2 # Reset init values based on slider
 
         # Kalman
        

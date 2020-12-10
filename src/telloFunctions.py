@@ -52,6 +52,8 @@ def findObjectHaar(img):
     myFaceListArea = []
     returnArray = []
 
+    (img.shape[0])
+
     for(x,y,w,h) in faces:
 
         # drawing face boundary
@@ -70,7 +72,7 @@ def findObjectHaar(img):
         returnArray = [myFaceListC[i][0],myFaceListC[i][1],myFaceListC[i][3]]
         return returnArray
     else:
-        return ([320,240,200])
+        return ([(img.shape[1]//2),(img.shape[0]//2),200])
 
 
 def initYOLO():
@@ -166,7 +168,7 @@ def findObjectYOLO(outputs, img, classNames, classNumber):
 
         return returnArray
     else:
-        return ([320,240,200])
+        return ([(img.shape[1]//2),(img.shape[0]//2),200])
 
 
 def findObjectHSV(img):
@@ -208,7 +210,7 @@ def findObjectHSV(img):
     
     
 
-    return ([320,240,200])
+    return ([(img.shape[1]//2),(img.shape[0]//2),200])
 
 
 def trackObject(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, sliderVal, frame, mode):
@@ -243,6 +245,9 @@ def trackObject(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slid
     error[0] = (cx - w//2) / (w/2) * 100 # LEFT/RIGHT
     error[1] = (bh - percentH)/percentH * 100 # FOR/BACK
     error[2] = (cy - h//2) / (h/2) * 100 # UP/DOWN
+
+    print(error[0])
+    print(error[2])
     
 
     # PID
