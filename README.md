@@ -1,11 +1,16 @@
 # Robotics Project 2020 - Drone tracking
 ##### Contributors: Anton Vo - Einar Tomter - Saodat Mansurova
 
-#### Overview
+## Introduction & overview
 
-This project uses the drone **Tello** and showcases three different object detection method.
-The system controlling the drone is also equipped with a PID-controller and Kalman filter for smoother movements and reactions.
+This project uses the drone **Tello** and showcases three different object detection method (HAAR, YOLO, HSV).
+The system controlling the drone is equipped with a PID-controller and Kalman filter for smoother movements and reactions.
 
+## Features
+
+##### On screen display (OSD)
+
+The drone have a few sensors that we have neatly displayed on the frame captured from the video feed sent from the drone.
 
 
 
