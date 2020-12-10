@@ -11,10 +11,10 @@ The system controlling the drone is equipped with a PID-controller and Kalman fi
 
 ### Controls
 
-We have implemented a control system which allow us to switch between tracking and manual control in addition to tracking mode and object.
+We have implemented a control system which allow us to switch between tracking and manual control in addition to tracking mode and object.<br/>
 The image below have highlighted all the keys available.
 
-<img src=/images/keyboardLayout.png height="300">
+<img src=/images/keyboardLayout.png height="300"><br/>
 
 * :blue_square: altitude and rotation (WASD) - translation forward/backward/left/right (arrow keys)
 * :green_square:Take off (F) - Land (L)
@@ -22,11 +22,11 @@ The image below have highlighted all the keys available.
 * :purple_square: Track mode rotation/translation (1 & 2) - Object detection method (B) - class change (C)
 * :yellow_square: enable/disable OSD
 
-
+<br/>
 
 ### On screen display (OSD)
 
-Data from the drones sensors are neatly displayed on the frame captured from the video feed sent from the drone.
+Data from the drones sensors are neatly displayed on the frame captured from the video feed sent from the drone.<br/>
 
 ![OSD](/images/OSD.png)
 
