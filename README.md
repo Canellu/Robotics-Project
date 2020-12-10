@@ -8,9 +8,17 @@ The system controlling the drone is equipped with a PID-controller and Kalman fi
 
 ## Features
 
+##### Controls
+
+We have implemented a control system which allow us to switch between tracking and manual control in addition to tracking mode and object.
+The image below have highlighted all the keys available.
+
+
 ##### On screen display (OSD)
 
-The drone have a few sensors that we have neatly displayed on the frame captured from the video feed sent from the drone.
+Data from the drones sensors are neatly displayed on the frame captured from the video feed sent from the drone.
+![Image of Keyboard controls](/images/keyboardLayout.png)
+
 
 
 
@@ -18,11 +26,11 @@ The drone have a few sensors that we have neatly displayed on the frame captured
 
 
 ###### ObjectTracking HSV
-######## Source: https://www.pyimagesearch.com/2015/09/14/ball-tracking-with-opencv/
+https://www.pyimagesearch.com/2015/09/14/ball-tracking-with-opencv/
 
 ###### Enable CUDA on openCV
-######## https://jamesbowley.co.uk/accelerate-opencv-4-5-0-on-windows-build-with-cuda-and-python-bindings/#visual_studio_cmake_cmd 
+https://jamesbowley.co.uk/accelerate-opencv-4-5-0-on-windows-build-with-cuda-and-python-bindings/#visual_studio_cmake_cmd 
 
 ###### Open Images V6 - Free labeled training data
-####### https://storage.googleapis.com/openimages/web/index.html
+https://storage.googleapis.com/openimages/web/index.html
 
