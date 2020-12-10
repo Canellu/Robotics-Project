@@ -67,7 +67,8 @@ Trackbars show minimum and maximum threshold values for detecting the tennis bal
 
 ## Kalman filter
 
-Here is a some plots showcasing how the kalman filter works. The GUI is made in python using PyQt5 and pyqtgraph.
+Here is some plots showcasing how the kalman filter works. The GUI is made in python using PyQt5 and pyqtgraph.
+Blue line is kalman values, red line is measured values. The measured values is accompanied with some noise which is partially suppressed by the filter.
 
 ![QtGui](/images/QtGui.png)
 
