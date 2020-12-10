@@ -33,7 +33,7 @@ pulse = True # For Red dot on OSD to pulse
 
 # Drone data
 droneStates = []
-S = 50
+S = 40
 classNumber = 0
 trackMethod = 0
 
