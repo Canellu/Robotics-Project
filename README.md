@@ -15,11 +15,9 @@ The image below have highlighted all the keys available.
 
 <img src=/images/keyboardLayout.png height="300">
 
-* WASD - altitude (up/down) and rotation
+* (&#x1F534;) WASD - altitude (up/down) and rotation
 * Arrows - translation (forward/backward/left/right)
 * 
-<h3 style="color:#ff0000">Danger</h3>
-
 ##### On screen display (OSD)
 
 Data from the drones sensors are neatly displayed on the frame captured from the video feed sent from the drone.
