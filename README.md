@@ -1,7 +1,7 @@
 # Robotics Project 2020 - Drone tracking
 ##### Contributors: Anton Vo - Einar Tomter - Saodat Mansurova
 
-![Tello](/images/Tello.jpg)
+<img src=/images/Tello.png width="800"><br/>
 
 ## Introduction & overview
 
