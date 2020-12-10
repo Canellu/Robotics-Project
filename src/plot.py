@@ -29,7 +29,7 @@ def update_plot_data():
 
     global whichMethod
 
-    print(f'In update: {Q}')
+    print(f'Q values: {Q[0][0]} , {Q[1][1]} , {Q[2][2]}')
 
     ret, frame = cap.read()
     if whichMethod == 0:
