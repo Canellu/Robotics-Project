@@ -65,6 +65,12 @@ Trackbars show minimum and maximum threshold values for detecting the tennis bal
 <img src=/images/HSVCombi.png width="600"><br/>
 
 
+## Kalman filter
+
+Here is a some plots showcasing how the kalman filter works. The GUI is made in python using PyQt5 and pyqtgraph.
+
+![QtGui](/images/QtGui.png)
+
 
 
 
