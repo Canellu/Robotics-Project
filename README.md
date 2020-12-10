@@ -31,7 +31,7 @@ The image below have highlighted all the keys available.
 
 Data from the drones sensors are neatly displayed on the frame captured from the video feed sent from the drone.<br/>
 
-<img src=/images/OSD.png width="600"><br/>
+<img src=/images/OSD.png width="800"><br/>
 
 * Left panel show altitude (tof: measured distance from infrared sensor, h: height above takeoff-level, baro: height above sea-level, temperature and pitch roll yaw
 * Right panel show velocity and acceleration in XYZ
