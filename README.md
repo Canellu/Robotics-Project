@@ -80,6 +80,6 @@ Blue line is kalman values, red line is measured values. The measured values is 
 
 
 ### References
-**References to all the sources are included in the *Final_report.pdf*.**
+**References to all the sources are included in the *Final_report.pdf*.**  
 **Youtube videos and general random google searches are not included, but is an essential resource.**
 
