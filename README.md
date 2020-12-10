@@ -12,8 +12,8 @@ The system controlling the drone is equipped with a PID-controller and Kalman fi
 
 We have implemented a control system which allow us to switch between tracking and manual control in addition to tracking mode and object.
 The image below have highlighted all the keys available.
-![Image of Keyboard controls](/images/keyboardLayout.png | width=100)
-<img src=/images/keyboardLayout.png width="100" height="100">
+![Image of Keyboard controls](/images/keyboardLayout.png)
+<img src=/images/keyboardLayout.png height="200">
 
 
 ##### On screen display (OSD)
