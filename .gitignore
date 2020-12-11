@@ -18,15 +18,12 @@ anton.names
 yolov3_only_anton.cfg
 yolov3_only_anton.weights
 6c.weights
-<<<<<<< HEAD
 6c.names
 a.cfg
 a.names
 a.weights
 anv.weights
 anv.cfg
-=======
 a.weights
 tiny.cfg
 tiny.weights
->>>>>>> 06237db88e04f47e493dc14ddcc5f8c0dfc5bc2f
