@@ -1,5 +1,5 @@
 # Robotics Project 2020 (Oslo Metropolitan University)  
-# Drone tracking
+# Object tracking with Drone
 ##### Contributors: Anton Vo - Einar Tomter - Saodat Mansurova
 
 <img src=/images/Tello.jpg width="800"><br/>
