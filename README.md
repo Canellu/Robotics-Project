@@ -24,8 +24,8 @@ Below is a simple flowchart of the system. We first connect to the drone, take o
 
 We have implemented a control system which allow us to switch between tracking and manual control in addition to tracking mode and object.<br/>
 There are two main reasons for this:
-* First reason is safety. As we are testing tracking and tuning parameters, the drone sometimes can perform unexpectedly.  Being able to regain control of the drones movement is crucial.
-* Second reason is just for 'Quality of Life' reasons. It is nice to be able to control the drone however you like, whenever you would like.
+* First reason is safety. As we are testing the tracking and tuning parameters, the drone can sometimes perform unexpectedly.  Being able to regain control of the drones movement is crucial.
+* Second reason is just for 'Quality of Life'. It is nice to be able to control the drone however you like, whenever you would like.
 
 The image below have highlighted all the keys available.
 
