@@ -68,6 +68,7 @@ Before training we gathered data and manually labeled ([tool](https://github.com
 Training is done with [*darknet*](https://pjreddie.com/darknet/yolo/) framework with pretrained weigths. We've also enabled OpenCV to run with CUDA (GPU) to increase performance in terms of FPS. 
 
 <img src=/images/YOLOCombi.png width="800"><br/>
+<img src=/images/annotateData.png width="800"><br/>
                                       
 ### HSV (Computer vision technique)
 
