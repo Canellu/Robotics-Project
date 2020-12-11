@@ -83,3 +83,6 @@ Blue line is kalman values, red line is measured values. The measured values is 
 **References to all the sources are included in the *Final_report.pdf*.**  
 **Youtube videos and general random google searches are not included, but is an essential resource.**
 
+#### Note
+The code is not written with *"Best practices"* in mind due to time limitations.  
+Source code is neither *Pythonic* or *Object oriented*.
