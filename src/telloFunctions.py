@@ -467,8 +467,7 @@ def drawOSD(droneStates, frame, pulse, mode, trackOn, classNames, classNumber, t
     placeIcon(frame, '../images/temperature.png', (30,634), 0.5)
     cv2.putText(frame, f'{avgTemp}C', (50,640), cv2.FONT_HERSHEY_DUPLEX, 0.6, (255,255,255), 1)
     
-# Call before main-loop to create the slider (starts from 0 to maxVal)
-# @Parameter is the window to place the slider on.
+
 def distanceSlider(frame):
 
     maxVal = 100
@@ -479,9 +478,7 @@ def distanceSlider(frame):
     sliderWindow = cv2.namedWindow(frame)
     cv2.createTrackbar("Distance", frame, startVal, maxVal, nothing)
 
-# Call inside loop to read slider
-# @name = name of trackbar
-# @frame = the window trackbar resides in
+
 def readSlider(name, frame):
     return cv2.getTrackbarPos(name, frame)    
 
