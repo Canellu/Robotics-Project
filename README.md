@@ -63,7 +63,8 @@ This method is simple to setup but does not provide a very good detection, it of
 
 ### YOLO (Multiple classes)
 
-This method is more advanced but is also more computationally heavy to run and is more complex in terms of setting up and training the AI model.
+This method is more advanced but is also more computationally heavy to run and is more complex in terms of setting up and training the AI model.  
+Before training we gathered data and manually labeled [tool](https://github.com/tzutalin/labelImg) the images used for training to detect **Anton** among some other classes. We also added pre-labeled images from [Open Images by Google](https://storage.googleapis.com/openimages/web/index.html) to the dataset for training.
 Training is done with [*darknet*](https://pjreddie.com/darknet/yolo/) framework with pretrained weigths. We've also enabled OpenCV to run with CUDA (GPU) to increase performance in terms of FPS. 
 
 <img src=/images/YOLOCombi.png width="800"><br/>
