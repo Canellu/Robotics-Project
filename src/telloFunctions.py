@@ -174,7 +174,11 @@ def findObjectHSV(img, minHSV=(28, 69, 100), maxHSV=(39, 237, 255)):
     #define the lower and upper boundaries of the "green"
     # ball in the HSV color space, then initialize the
     # list of tracked points
-  
+    f = open("../HSV/threshold.txt", 'r')
+    threshold = f.read().split(',')
+    threshold = list(map(int, threshold))
+    minHSV = (threshold[0],threshold[1],threshold[2])
+    maxHSV = (threshold[3],threshold[4],threshold[5])
 
     center = (0,0)
     radius = 0
