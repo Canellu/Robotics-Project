@@ -60,7 +60,7 @@ This method is simple to setup but does not provide a very good detection, it of
 ### YOLO (Multiple classes)
 
 This method is more advanced but is also more computationally heavy to run and is more complex in terms of setting up and training the AI model.
-Training is done with *darknet* framework with pretrained weigths. We've also enabled OpenCV to run with CUDA (GPU) to increase performance in terms of FPS. 
+Training is done with [*darknet*](https://pjreddie.com/darknet/yolo/) framework with pretrained weigths. We've also enabled OpenCV to run with CUDA (GPU) to increase performance in terms of FPS. 
 
 <img src=/images/YOLOCombi.png width="800"><br/>
                                       
