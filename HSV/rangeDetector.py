@@ -17,8 +17,8 @@ def callback(value):
 
 
 def setup_trackbars(range_filter):
-    cv2.namedWindow("Trackbars", 0)
-
+    cv2.namedWindow("Trackbars", cv2.WINDOW_AUTOSIZE)
+    cv2.resizeWindow("Trackbars", 1000, 350)
     for i in ["MIN", "MAX"]:
         v = 0 if i == "MIN" else 255
 
@@ -72,7 +72,7 @@ def main():
         else:
             frame_to_thresh = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     else:
-        camera = cv2.VideoCapture(0)
+        camera = cv2.VideoCapture(1)
 
     setup_trackbars(range_filter)
 
@@ -100,6 +100,9 @@ def main():
             cv2.imshow("Thresh", thresh)
 
         if cv2.waitKey(1) & 0xFF is ord('q'):
+            f = open("threshold.txt", 'w')
+            f.write(f'{v1_min},{v2_min},{v3_min},{v1_max},{v2_max},{v3_max}')
+            f.close()
             break
 
 
