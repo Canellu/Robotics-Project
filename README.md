@@ -1,10 +1,11 @@
-# Robotics Project 2020 (Oslo Metropolitan University) - Drone tracking
+# Robotics Project 2020 (Oslo Metropolitan University)  
+# Drone tracking
 ##### Contributors: Anton Vo - Einar Tomter - Saodat Mansurova
 
 <img src=/images/Tello.jpg width="800"><br/>
 
 ## Showcase of project (Gif)
-### Full video can be seen on YouTube: [Link to YouTube](https://youtu.be/zmb9cjAXg5U)
+### Full video can be seen on YouTube: [Link](https://youtu.be/zmb9cjAXg5U)
 
 ![Gif](/images/demo.gif)
 
