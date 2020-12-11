@@ -41,12 +41,7 @@ def update_plot_data():
         outputs = progYOLO(frame, net, whT)
         info = findObjectYOLO(outputs, frame, classNames, 0) # YOLO
     elif whichMethod == 1:
-        f = open("../HSV/threshold.txt", 'r')
-        threshold = f.read().split(',')
-        threshold = list(map(int, threshold))
-        minHSV = (threshold[0],threshold[1],threshold[2])
-        maxHSV = (threshold[3],threshold[4],threshold[5])
-        info = findObjectHSV(frame, minHSV, maxHSV) # HSV
+        info = findObjectHSV(frame) # HSV
     else:
         info = findObjectHaar(frame)
 
