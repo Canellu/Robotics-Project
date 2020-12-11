@@ -25,11 +25,13 @@ plotError = [[],[],[]] # Do not change value
 loopCount = 0
 updateCycle = 3
 
+
 # FPS
 counter = 0
 FPS = 0
 startTime = time.time()
 pulse = True # For Red dot on OSD to pulse
+
 
 # Drone data
 droneStates = []
@@ -37,11 +39,13 @@ S = 40
 classNumber = 0
 trackMethod = 0
 
+
 # Kalman variables, declarations
 Q = np.array([[5, 0, 0], [0, 5, 0], [0, 0, 1.4]]) # Process noise
 R = np.array([[100, 0, 0], [0, 100, 0],[0, 0, 90]]) # Measurement noise
 X = np.array([480, 360, 180])
 P = np.array([[15, 0, 0],[0, 35, 0], [0, 0, 15]])
+
 
 # PID data
 pidY = [0.25, 0.02, 0.2] # Left right
@@ -146,9 +150,6 @@ if connection:
     dataThread = threading.Thread(target=droneData, args=(droneStates,), daemon = True)
     dataThread.start()
 
-
-
-
     # Create Distance slider
     distanceSlider("Display") 
     
@@ -170,44 +171,29 @@ while connection:
 
     #Check wether to track object or not
     if trackOn:
-
         
-
         # Tracking methods: HAAR, YOLO, HSV
-
         if trackMethod == 0:
             outputs = progYOLO(img, net, whT)
             info = findObjectYOLO(outputs, img, classNames, classNumber) # YOLO
-
         elif trackMethod == 1:
             info = findObjectHaar(img) # HAAR
-
         else:
             info = findObjectHSV(img) # HSV
         
-
-
-        
         distance = readSlider('Distance', 'Display') # Read slider data
     
-
         # Kalman
-       
         X, P = kalman(info, X, P, Q, R)
-        
+
         # Control drone movement to track object
         pInfo, pError, infoPID = trackObject(drone, X, pInfo, frameWidth, frameHeight, pidY, pidX, pidZ, pidYaw, pError, distance, img, mode)
-
-
-       
 
     else:
 
         updateMovement(drone)
     
-
     
-
     if OSDon:
         # FPS
         counter+=1
@@ -219,7 +205,6 @@ while connection:
             startTime = time.time()
             pulse = not pulse
         
-    
         img = cv2.copyMakeBorder(img, 20, 20, 120, 120, cv2.BORDER_CONSTANT, value=(0,0,0))
         cv2.putText(img, 'FPS:', (166,650), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,255), 1)
         cv2.putText(img, str(FPS), (228,650), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255,255,255), 2)
@@ -231,12 +216,11 @@ while connection:
     cv2.waitKey(1)
 
     
-
+    
     # To land and end connection
     if keyPressed == 'q':
         cv2.destroyAllWindows()
         drone.end()
-        
         break
     
     # To take off
@@ -246,7 +230,6 @@ while connection:
     # To land drone
     elif keyPressed == 'l':
         drone.land()
-
 
     # Enable/Disable tracking
     elif keyPressed == 't':
@@ -265,12 +248,14 @@ while connection:
     elif keyPressed == 'o':
         OSDon = not OSDon
 
+    # Change track object
     elif keyPressed == 'c':
         if classNumber == len(classNames)-1:
             classNumber = 0
         else:
             classNumber += 1
-
+            
+    # Change track method
     elif keyPressed == 'b':
         if trackMethod == 2:
             trackMethod = 0

@@ -75,7 +75,7 @@ def findObjectHaar(img):
 
 def initYOLO():
     # YOLO STUFF
-    whT = 416 # A parameter for image to blob conversion
+    whT = 320 # A parameter for image to blob conversion
 
     # Import class names to list from coco.names
     classesFile = "../YOLOv3/a.names"
@@ -144,7 +144,6 @@ def findObjectYOLO(outputs, img, classNames, classNumber):
         x, y, w, h = box[0], box[1], box[2], box[3] # Extract x, y, width, height
         area = w * h
 
-            
         if(classNames[classIndices[i]] == toTrack):
             returnIndices.append(i)
 
@@ -242,7 +241,6 @@ def trackObject(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slid
     error[2] = (cy - h//2) / (h/2) * 100 # UP/DOWN
 
     
-
     # PID
     if mode:
         # rotation - Yaw
@@ -254,7 +252,6 @@ def trackObject(drone, info, pInfo, w, h, pidY, pidX, pidZ, pidYaw, pError, slid
         speed[0] = pidY[0]*error[0] + pidY[1]*(error[0]+pError[0]) + pidY[2]*(error[0]-pError[0])
         speed[0] = int(np.clip(speed[0],-100, 100))
     
-
 
     # X - forward/back
     speed[1] = ( (pidX[0]*error[1]) + (pidX[1]*(error[1]+pError[1])) + (pidX[2]*(error[1]-pError[1])) ) * (-1)
